@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stop Burning Money — Token-Saving Practices for AI Coding Agents</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #F7F8FA;
+      --ink:          #0F0F1E;
+      --ink-soft:     #2C2C42;
+      --mid:          #6B6B8A;
+      --rule:         #E3E5EE;
+      --amber:        #F59E0B;
+      --amber-soft:   #FFFBEB;
+      --green:        #059669;
+      --red:          #DC2626;
+      --blue:         #4F46E5;
+      --code-bg:      #1A1B2E;
+      --code-fg:      #C9CBDF;
+      --w-text:       680px;
+      --w-wide:       880px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Masthead ───────────────────────────────────── */
+    .masthead {
+      padding: 16px 48px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .masthead-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .masthead-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--mid);
+    }
+
+    /* ── Hero ───────────────────────────────────────── */
+    .hero {
+      max-width: var(--w-wide);
+      margin: 0 auto;
+      padding: 72px 48px 44px;
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 18px;
+    }
+    .hero-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(44px, 9vw, 84px);
+      line-height: 1.0;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 22px;
+    }
+    .hero-deck {
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--mid);
+      max-width: 520px;
+    }
+
+    /* ── Terminal (signature element) ───────────────── */
+    .terminal-wrap {
+      max-width: var(--w-wide);
+      margin: 0 auto;
+      padding: 0 48px 72px;
+    }
+    .terminal {
+      background: var(--code-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .terminal-chrome {
+      background: #252638;
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot.r { background: #FF5F56; }
+    .dot.y { background: #FFBD2E; }
+    .dot.g { background: #27C93F; }
+    .chrome-label {
+      margin-left: 8px;
+      font-size: 11px;
+      color: #555780;
+      letter-spacing: 0.04em;
+    }
+    .terminal-body {
+      padding: 26px 32px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .tl {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .tl.show { opacity: 1; }
+    .tl-p { color: #6C63FF; user-select: none; flex-shrink: 0; }
+    .tl-cmd { color: var(--code-fg); }
+    .tl-fail { color: #FF5F56; }
+    .tl-gap { height: 8px; }
+    .tl-cost { color: var(--amber); font-size: 12.5px; padding-left: 2px; }
+    .tl-stop { color: #27C93F; font-weight: 500; padding-left: 2px; }
+
+    /* ── Article ────────────────────────────────────── */
+    .article {
+      max-width: var(--w-text);
+      margin: 0 auto;
+      padding: 0 48px 100px;
+    }
+
+    /* ── Part markers ───────────────────────────────── */
+    .part-marker {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin: 80px 0 44px;
+    }
+    .part-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      white-space: nowrap;
+    }
+    .part-line { height: 1px; background: var(--rule); flex: 1; }
+
+    /* ── Typography ─────────────────────────────────── */
+    .article h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(26px, 4vw, 36px);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+    .article h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 44px 0 10px;
+      letter-spacing: 0.01em;
+    }
+    .article h3 a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 2px solid var(--amber);
+      padding-bottom: 1px;
+      transition: color 0.15s;
+    }
+    .article h3 a:hover { color: var(--amber); }
+    .article p { color: var(--ink-soft); margin-bottom: 20px; }
+    .article ul, .article ol {
+      color: var(--ink-soft);
+      margin: 12px 0 20px 22px;
+    }
+    .article li { margin-bottom: 8px; line-height: 1.65; }
+    .article strong { color: var(--ink); font-weight: 600; }
+    .article em { color: inherit; }
+    .article a { color: var(--blue); }
+    .article code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: #ECEDF7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--ink);
+    }
+
+    /* override for priority list — don't inherit article ul margin-left */
+    .article .priority-list {
+      margin: 0 0 32px;
+      padding: 0;
+    }
+
+    /* ── Code block ─────────────────────────────────── */
+    pre.code-block {
+      background: var(--code-bg);
+      border-radius: 8px;
+      padding: 22px 26px;
+      margin: 16px 0 28px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--code-fg);
+      overflow-x: auto;
+    }
+    pre.code-block .comment { color: #4A4D70; }
+
+    /* ── Callout ────────────────────────────────────── */
+    .callout {
+      background: var(--amber-soft);
+      border-left: 3px solid var(--amber);
+      padding: 14px 18px;
+      margin: 24px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #78350F;
+    }
+
+    /* ── Data label ─────────────────────────────────── */
+    .data-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin: 28px 0 8px;
+    }
+
+    /* ── Tables ─────────────────────────────────────── */
+    .table-scroll { overflow-x: auto; margin-bottom: 28px; }
+    .bench-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 440px;
+    }
+    .bench-table th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid);
+      font-weight: 400;
+      text-align: left;
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .bench-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--rule);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--ink);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .bench-table tr:last-child td { border-bottom: none; }
+    .bench-table .hl td { background: var(--amber-soft); }
+    .good { color: var(--green); }
+    .bad  { color: var(--red); }
+    .win  { color: var(--green); font-weight: 500; }
+    .tie  { color: var(--mid); }
+
+    /* ── Stat pair ──────────────────────────────────── */
+    .stat-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 28px 0;
+    }
+    .stat-card {
+      background: white;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 20px 22px;
+    }
+    .stat-card.win-card { border-color: var(--green); }
+    .stat-n {
+      font-family: 'DM Serif Display', serif;
+      font-size: 44px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-n.green { color: var(--green); }
+    .stat-n.red   { color: var(--red); }
+    .stat-desc { font-size: 12px; color: var(--mid); line-height: 1.45; }
+
+    /* ── Ponytail compare grid ──────────────────────── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 24px 0 28px;
+    }
+    .compare-card {
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .compare-card.win-card { border-color: var(--green); }
+    .compare-head {
+      padding: 9px 16px;
+      background: #F1F2F8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .compare-card.win-card .compare-head {
+      background: #D1FAE5;
+      color: var(--green);
+    }
+    .compare-body { padding: 18px 18px 16px; }
+    .compare-n {
+      font-family: 'DM Serif Display', serif;
+      font-size: 44px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .compare-n.green { color: var(--green); }
+    .compare-n.red   { color: var(--red); }
+    .compare-body p {
+      font-size: 13px;
+      color: var(--mid);
+      margin-bottom: 8px !important;
+      line-height: 1.5;
+    }
+    .compare-body p:last-child { margin-bottom: 0 !important; }
+
+    /* ── Priority list ──────────────────────────────── */
+    .priority-list { list-style: none; }
+    .priority-item {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 18px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--rule);
+      align-items: start;
+    }
+    .priority-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--amber);
+      padding-top: 3px;
+    }
+    .priority-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .priority-desc {
+      font-size: 14px;
+      color: var(--mid);
+      line-height: 1.55;
+    }
+    .priority-desc code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: #ECEDF7;
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--ink);
+    }
+
+    /* ── Conclusion ─────────────────────────────────── */
+    .conclusion {
+      background: var(--ink);
+      border-radius: 12px;
+      padding: 52px;
+      margin-top: 64px;
+    }
+    .conclusion h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 30px;
+      color: white;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+    .conclusion p { color: #9090B0; margin-bottom: 18px; line-height: 1.7; }
+    .conclusion p:last-child { margin-bottom: 0; }
+    .conclusion strong { color: white; }
+    .conclusion code {
+      background: rgba(255,255,255,0.08);
+      color: var(--amber);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* ── Sources ────────────────────────────────────── */
+    .sources {
+      margin-top: 52px;
+      padding-top: 28px;
+      border-top: 1px solid var(--rule);
+    }
+    .sources-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 14px;
+    }
+    .sources ul { list-style: none; margin: 0; padding: 0; }
+    .sources li { margin-bottom: 8px; font-size: 13px; }
+    .sources a {
+      color: var(--mid);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sources a:hover { color: var(--ink); border-color: var(--ink); }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 640px) {
+      .masthead   { padding: 13px 20px; }
+      .hero       { padding: 48px 20px 36px; }
+      .terminal-wrap { padding: 0 20px 48px; }
+      .terminal-body { padding: 20px 18px 24px; }
+      .article    { padding: 0 20px 64px; }
+      .stat-pair, .compare-grid { grid-template-columns: 1fr; }
+      .conclusion { padding: 32px 24px; }
+      .part-marker { margin: 56px 0 36px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tl { opacity: 1 !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="masthead">
+    <span class="masthead-brand">Insights</span>
+    <span class="masthead-meta">July 2025 · 8 min read</span>
+  </header>
+
+  <section class="hero">
+    <div class="hero-eyebrow">AI Coding Agents · Cost &amp; Efficiency</div>
+    <h1 class="hero-title">Stop Burning Money</h1>
+    <p class="hero-deck">Token-saving practices for AI coding agents — from configuration basics to tools with actual benchmark data behind them.</p>
+  </section>
+
+  <!-- Signature element: the loop, visualised -->
+  <div class="terminal-wrap">
+    <div class="terminal" role="img" aria-label="Animation of an AI agent retrying the same failing command five times, with cost climbing, until it is told to stop and form a new hypothesis">
+      <div class="terminal-chrome">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <span class="chrome-label">your-agent — bash</span>
+      </div>
+      <div class="terminal-body">
+        <div class="tl" id="tl1"><span class="tl-p">❯</span><span class="tl-cmd">npm run build &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tl-fail">✗ failed</span></span></div>
+        <div class="tl" id="tl2"><span class="tl-p">❯</span><span class="tl-cmd">npm run build --verbose &nbsp;&nbsp;&nbsp;&nbsp;<span class="tl-fail">✗ same error</span></span></div>
+        <div class="tl" id="tl3"><span class="tl-p">❯</span><span class="tl-cmd">clearing cache and retrying &nbsp;<span class="tl-fail">✗ still broken</span></span></div>
+        <div class="tl" id="tl4"><span class="tl-p">❯</span><span class="tl-cmd">trying a different approach &nbsp;<span class="tl-fail">✗ nope</span></span></div>
+        <div class="tl" id="tl5"><span class="tl-p">❯</span><span class="tl-cmd">ok what if we reinstall everything...</span></div>
+        <div class="tl-gap"></div>
+        <div class="tl tl-cost" id="tl6">&nbsp;&nbsp;cost so far: $0.43 and climbing</div>
+        <div class="tl-gap"></div>
+        <div class="tl tl-stop" id="tl7">→ &nbsp;cap at 2–3 attempts. force a new hypothesis. ask.</div>
+      </div>
+    </div>
+  </div>
+
+  <article class="article">
+
+    <h2>The context window is not a landfill.</h2>
+
+    <p>You're watching the progress bar on your monthly AI budget as your agent tries the same command for the fifth time. <em>This time it'll work</em>, you think.</p>
+
+    <p>A little while later, you're watching it generate a two-page design document for what should've been a three-line change. You close the terminal and implement it yourself.</p>
+
+    <p>If you've been using AI coding agents in the past year, this is your life. You've either accepted it as the cost of progress, or — like me — have been trying to stretch the token budget before someone notices the cloud bill.</p>
+
+    <p>Here's what actually works: configuration changes that are free and boring, and a handful of tools with real benchmark data. In rough order of impact.</p>
+
+    <!-- ─── Part 01 ─────────────────────────────────── -->
+    <div class="part-marker">
+      <span class="part-tag">Part 01 · Configuration</span>
+      <div class="part-line"></div>
+    </div>
+
+    <h2>Fix your configuration first.</h2>
+
+    <p>The uncomfortable truth: most token waste isn't a tooling problem. It's a configuration problem. You handed an agent a firehose and are surprised it's using it. Let's plug some holes before touching any libraries.</p>
+
+    <h3>The <code>AGENT.md</code> file: your forgotten budget manager</h3>
+
+    <p>Most people treat <code>AGENT.md</code> (or <code>CLAUDE.md</code>, <code>AGENTS.md</code> — pick your flavour) as a place to dump project context. That's only half right. It's also your first line of defence against runaway behaviour.</p>
+
+    <p><strong>Stop loops before they compound.</strong> Hard iteration caps are the single biggest lever most people aren't pulling. If an agent hasn't resolved something after N attempts, it should halt — not heroically try a seventh variation of the same broken command. Add explicit rules like these:</p>
+
+<pre class="code-block"><span class="comment"># In your AGENT.md / CLAUDE.md</span>
+- Cap each debug loop at 2–3 attempts, then stop and report the blocker.
+- Do NOT retry the same approach more than once.
+  If something fails, form a new hypothesis first.
+- If an assumption cannot be verified with available tools, STOP and ask.</pre>
+
+    <p>This is unglamorous. It will not get a GitHub star. But it will save you more money than any compression library.</p>
+
+    <p><strong>Budget guardrails at the agent level.</strong> Setting per-agent spend limits means a runaway loop hits a ceiling and dies quietly, rather than you discovering the damage on Monday morning. Tools like <a href="https://airia.com/">Airia</a> have this built in; even a simple token counter with a hard stop in your orchestration layer goes a long way.</p>
+
+    <p><strong>Preprocess your error logs.</strong> Dumping a 4,000-line stack trace into context and hoping the agent figures it out is like handing someone a bag of shredded documents and asking them to read the memo. Strip it first. Pass only:</p>
+
+    <ul>
+      <li>The error type</li>
+      <li>The failing command</li>
+      <li>The last relevant stack frame</li>
+    </ul>
+
+    <p>Not the whole dump. Not every timestamp. Not six repetitions of the same exception. Just the signal. Your agent will actually perform <em>better</em> — less noise to wade through — and your cost per call drops meaningfully.</p>
+
+    <h3>Skills: teach once, reference forever</h3>
+
+    <p>Instead of re-explaining project conventions in every conversation, encode them as reusable skills the agent loads selectively. Think of it as teaching your agent the codebase's rules once, rather than paying to repeat them on every invocation. Most agent frameworks support this natively.</p>
+
+    <!-- ─── Part 02 ─────────────────────────────────── -->
+    <div class="part-marker">
+      <span class="part-tag">Part 02 · Tools (with receipts)</span>
+      <div class="part-line"></div>
+    </div>
+
+    <h2>Tools that actually help.</h2>
+
+    <p>These fall into four categories: compressing what goes <em>in</em>, being smarter about <em>what</em> goes in, compressing what comes <em>out</em>, and full agent harnesses. Here's what the numbers actually look like.</p>
+
+    <h3>Input compression: <a href="https://github.com/headroomlabs-ai/headroom">Headroom</a></h3>
+
+    <p>Headroom trims input tokens before they reach the model — smart truncation and summarisation of conversation history and tool outputs. If you're building agents that accumulate long exchanges or chain tool results together, this is worth a look. Less in = less cost = faster responses.</p>
+
+    <h3>Code search: Graphify and Semble</h3>
+
+    <p>One of the most common token crimes: dumping entire files — or entire repositories — into context because you're not sure what's relevant. The fix isn't a bigger context window. It's smarter retrieval.</p>
+
+    <p>I ran a three-way A/B/C test: traditional grep+read, Graphify, and Semble, on the same set of codebase research tasks.</p>
+
+    <div class="data-label">Speed &amp; token efficiency</div>
+    <div class="table-scroll">
+      <table class="bench-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Duration</th>
+            <th>Tool calls</th>
+            <th>Input tokens (est.)</th>
+            <th>Cost (est.)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Traditional grep+read</td>
+            <td>58s</td>
+            <td>11</td>
+            <td>~99k</td>
+            <td>~$0.37</td>
+          </tr>
+          <tr>
+            <td>Graphify</td>
+            <td>62s</td>
+            <td>17</td>
+            <td>~85k</td>
+            <td class="good">~$0.32</td>
+          </tr>
+          <tr class="hl">
+            <td>Semble</td>
+            <td>70s</td>
+            <td>19</td>
+            <td class="good">~76k</td>
+            <td>~$0.33</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="data-label">Accuracy across 3 behavioral questions</div>
+    <div class="table-scroll">
+      <table class="bench-table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Traditional</th>
+            <th>Graphify</th>
+            <th>Semble</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Handler method detail</td>
+            <td class="win">✓ correct</td>
+            <td class="bad">✗ missed key detail</td>
+            <td class="win">✓ correct</td>
+          </tr>
+          <tr>
+            <td>Event flow chain</td>
+            <td class="tie">partial</td>
+            <td class="bad">✗ high-level only</td>
+            <td class="win">✓ full chain</td>
+          </tr>
+          <tr>
+            <td>Cross-file relationships</td>
+            <td class="win">✓ correct</td>
+            <td class="win">✓ correct</td>
+            <td class="win">✓ correct</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Semble wins on accuracy</strong> — it returns actual code snippets at the right line, giving the agent enough method-body detail to answer behavioral questions correctly while avoiding the full-file verbosity of traditional reads. <strong>Graphify</strong> is cheapest overall and wins when you need to map cross-file structure ("what depends on what", "which classes implement this interface"). In a separate two-way test focused on larger research tasks, Graphify consumed <strong>~66k vs ~225k input tokens</strong> compared to traditional methods — roughly 3.4× fewer, translating to ~$0.27 vs ~$0.75 per session.</p>
+
+    <p>Traditional grep remains competitive when you already know exactly where to look. It used the fewest tool calls in the three-way test — because when the answer is one file away, you don't need a graph.</p>
+
+    <div class="callout">
+      <strong>Recommended workflow:</strong> Semble for targeted behavioral questions → Graphify to map cross-file dependencies → traditional read only when you need the full file body. Don't <code>SELECT&nbsp;*</code> when you only need three columns.
+    </div>
+
+    <h3>Output compression: <a href="https://github.com/JuliusBrussee/caveman">Caveman</a></h3>
+
+    <p>Agents are, as a species, verbose. Ask one to rename a variable and it'll explain its reasoning in three paragraphs, write a changelog entry, and propose a refactor of the surrounding module. We love the enthusiasm. We do not love the bill.</p>
+
+    <p>Caveman is a Claude Code plugin that forces the model into compressed output mode — stripping responses down to the functional minimum. The results are honest: it depends entirely on the task type.</p>
+
+    <div class="data-label">Code review — Caveman adds cost</div>
+    <div class="table-scroll">
+      <table class="bench-table">
+        <thead>
+          <tr><th>Mode</th><th>Cost</th><th>Wall time</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Regular</td><td>$0.43</td><td>20m 27s</td></tr>
+          <tr><td>Caveman</td><td class="bad">$0.46 ▲</td><td class="bad">41m 46s ▲</td></tr>
+          <tr><td>Caveman Ultra</td><td>$0.44</td><td class="good">3m 18s ↓</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="data-label">File summarisation — Caveman Ultra wins clearly</div>
+    <div class="table-scroll">
+      <table class="bench-table">
+        <thead>
+          <tr><th>Mode</th><th>Cost</th><th>Wall time</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Regular</td><td>$0.26</td><td>1m 20s</td></tr>
+          <tr class="hl"><td>Caveman Ultra</td><td class="good">$0.09 &nbsp;↓ 64%</td><td class="good">39s</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="stat-pair">
+      <div class="stat-card">
+        <div class="stat-n red">+7%</div>
+        <div class="stat-desc">cost increase on code review<br/>with regular Caveman mode</div>
+      </div>
+      <div class="stat-card win-card">
+        <div class="stat-n green">−64%</div>
+        <div class="stat-desc">cost reduction on summarisation<br/>with Caveman Ultra</div>
+      </div>
+    </div>
+
+    <p>The lesson: Caveman isn't a silver bullet. It's a scalpel for the right kind of work — large-context summarisation where the model's verbosity is the actual bottleneck. Point it at a code review and you might make things worse. Point it at a documentation or summary task and it sings. <a href="https://thenewstack.io/caveman-mode-token-savings/">Reported savings in specific setups have reached 75%</a>.</p>
+
+    <h3>Output compression: <a href="https://medium.com/coding-nexus/ponytail-the-ai-plugin-that-makes-claude-code-write-54-less-code-without-breaking-anything-df29842c8ff6">Ponytail</a></h3>
+
+    <p>Ponytail takes a different philosophy: rather than compressing the output format, it teaches the agent to write <em>less code in the first place</em> — claiming a 54% reduction in generated code without breaking functionality. The idea is to aggressively discourage the model's habit of over-engineering. Instead of generating a helper utility, an abstraction layer, <em>and</em> a README for a three-line feature, it just does the thing.</p>
+
+    <p>On well-scoped, concrete tasks it's roughly a wash — both modes produce similar solutions, and normal mode can actually be more accurate (it finds the real method name; Ponytail sometimes guesses). Where Ponytail's philosophy has clear value is on vague, open-ended prompts. I tested <em>"add a reporting system for sync stats"</em>:</p>
+
+    <div class="compare-grid">
+      <div class="compare-card win-card">
+        <div class="compare-head">Ponytail</div>
+        <div class="compare-body">
+          <div class="compare-n green">3</div>
+          <p>lines of code. Zero new abstractions. Zero new files.</p>
+          <p>Reasoned that individual operations were already logged — ops can grep for counts. Added three log lines: sync start, employee count, sync complete with duration.</p>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-head">Normal mode</div>
+        <div class="compare-body">
+          <div class="compare-n red">163</div>
+          <p>lines of code. 4 new types, 4 new files, 1 breaking interface change touching all 4 implementors.</p>
+          <p>Built a SyncReport record, SyncStatus enum, SyncReportStore Spring component, and a REST endpoint. A coherent system — but solving a more ambitious interpretation of the task than was asked for.</p>
+        </div>
+      </div>
+    </div>
+
+    <p>This is where Ponytail's value is unambiguous. "Reporting system" is a scope magnet — it pulls in types, stores, endpoints, and interfaces by default. Ponytail short-circuited all of that by asking the real question: <em>what does ops actually need to see?</em> Three log lines. The caveat: on specific, concrete tasks, normal mode finds more accurate method names and often writes fewer lines. Ponytail pays off most when task scope is genuinely ambiguous and the risk of over-engineering is high.</p>
+
+    <h3>Full agent harnesses: <a href="https://pi.dev/">Pi</a></h3>
+
+    <p>If you'd rather not assemble these pieces yourself — input compression here, loop guards there, output trimming somewhere else — full harnesses handle all of it. Pi is an agent orchestration layer that packages budget controls, smarter context management, and loop prevention into a single product. <a href="https://warden.sentry.dev/benchmarking">Benchmarks against vanilla Claude setups</a> show meaningful cost improvements. It won't appeal to the "I want to understand exactly what's happening" crowd, but if you want to stop thinking about this and get back to building, it's worth evaluating.</p>
+
+    <!-- ─── Part 03 ─────────────────────────────────── -->
+    <div class="part-marker">
+      <span class="part-tag">Part 03 · The meta-lesson</span>
+      <div class="part-line"></div>
+    </div>
+
+    <h2>The biggest lever isn't a tool.</h2>
+
+    <p>The tools are real, and some of them work very well in the right context. But the biggest single lever — by a significant margin — is stopping bad loops early.</p>
+
+    <p>A single runaway debugging loop that spins fifteen iterations on a broken assumption doesn't just waste 15× the tokens on that loop. It fills your context window with noise, which makes subsequent reasoning worse, which causes more iterations, which fills the window further. It's a compounding disaster, and no compression library rescues you from it after the fact.</p>
+
+    <p>What actually works, in rough order of impact:</p>
+
+    <ul class="priority-list">
+      <li class="priority-item">
+        <span class="priority-num">01</span>
+        <div>
+          <div class="priority-title">Hard iteration caps</div>
+          <div class="priority-desc">If the agent hasn't solved it in 2–3 attempts, force a new hypothesis or escalate. This alone is the biggest single bleed you can stop.</div>
+        </div>
+      </li>
+      <li class="priority-item">
+        <span class="priority-num">02</span>
+        <div>
+          <div class="priority-title">Structured error preprocessing</div>
+          <div class="priority-desc">Summarise logs into structured facts before they hit the context window. Error type + immediate context only — not the whole dump.</div>
+        </div>
+      </li>
+      <li class="priority-item">
+        <span class="priority-num">03</span>
+        <div>
+          <div class="priority-title">Surgical code retrieval</div>
+          <div class="priority-desc">Use Semble or Graphify instead of pasting files wholesale. Don't <code>SELECT *</code> when you need three columns.</div>
+        </div>
+      </li>
+      <li class="priority-item">
+        <span class="priority-num">04</span>
+        <div>
+          <div class="priority-title">Output compression on the right tasks</div>
+          <div class="priority-desc">Caveman Ultra for summarisation-heavy work. Ponytail for vague, scope-prone tasks where the model might otherwise over-engineer.</div>
+        </div>
+      </li>
+      <li class="priority-item">
+        <span class="priority-num">05</span>
+        <div>
+          <div class="priority-title">Full harnesses</div>
+          <div class="priority-desc">Pi and similar tools if you want loop prevention, context management, and budget controls packaged together.</div>
+        </div>
+      </li>
+    </ul>
+
+    <p>The model isn't the problem. The cheapest model in the world will still burn through your budget if it's spinning in a loop, reading your entire codebase on every call, and writing four paragraphs to tell you it renamed a variable.</p>
+
+    <!-- ─── Conclusion ──────────────────────────────── -->
+    <div class="conclusion">
+      <h2>Your token budget is a resource, not a tax.</h2>
+      <p>Tokens aren't infinite. Neither is your patience, or your cloud budget. Most of the waste is preventable — and the fixes range from free (configuration) to cheap (most of these tools).</p>
+      <p>None of this is as satisfying as installing a library and watching a metric improve. The biggest wins require discipline: structured instructions, loop guards, preprocessed inputs, surgical context. It's the AI equivalent of eating vegetables. Not glamorous — but your future self, the one looking at next month's invoice, will be grateful.</p>
+      <p><strong>Now go put a loop cap in your <code>AGENT.md</code>. I'll wait.</strong></p>
+    </div>
+
+    <!-- ─── Sources ────────────────────────────────── -->
+    <div class="sources">
+      <div class="sources-head">Sources &amp; further reading</div>
+      <ul>
+        <li><a href="https://www.qwe.edu.pl/tutorial/caveman-claude-reduce-tokens-75-percent/">Caveman benchmarks and tutorial</a></li>
+        <li><a href="https://thenewstack.io/caveman-mode-token-savings/">Caveman Mode — The New Stack</a></li>
+        <li><a href="https://warden.sentry.dev/benchmarking">Pi vs Claude harness benchmarks — Sentry</a></li>
+        <li><a href="https://medium.com/coding-nexus/ponytail-the-ai-plugin-that-makes-claude-code-write-54-less-code-without-breaking-anything-df29842c8ff6">Ponytail — Coding Nexus</a></li>
+        <li><a href="https://codepointer.substack.com/p/cutting-llm-token-costs-with-rtk">Cutting LLM token costs with RTK — CodePointer</a></li>
+        <li><a href="https://github.com/headroomlabs-ai/headroom">Headroom — GitHub</a></li>
+        <li><a href="https://github.com/JuliusBrussee/caveman">Caveman — GitHub</a></li>
+      </ul>
+    </div>
+
+  </article>
+
+  <script>
+    const sequence = [
+      { id: 'tl1', delay: 500 },
+      { id: 'tl2', delay: 1100 },
+      { id: 'tl3', delay: 1700 },
+      { id: 'tl4', delay: 2300 },
+      { id: 'tl5', delay: 2900 },
+      { id: 'tl6', delay: 3600 },
+      { id: 'tl7', delay: 4600 },
+    ];
+
+    function runAnimation() {
+      sequence.forEach(({ id, delay }) => {
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('show');
+        }, delay);
+      });
+    }
+
+    const termWrap = document.querySelector('.terminal-wrap');
+    if (termWrap && 'IntersectionObserver' in window) {
+      let fired = false;
+      const obs = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !fired) {
+          fired = true;
+          runAnimation();
+          obs.disconnect();
+        }
+      }, { threshold: 0.25 });
+      obs.observe(termWrap);
+    } else {
+      runAnimation();
+    }
+  </script>
+
+</body>
+</html>
