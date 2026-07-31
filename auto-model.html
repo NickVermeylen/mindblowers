@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stop Asking Which Model to Use — Let Your Config Decide</title>
+  <meta name="description" content="A practical comparison of Claude and OpenAI models for coding agents, and a simple pattern for delegating model choice to skills and agent configs so you never have to think about it again." />
+  <link rel="canonical" href="https://insights.nickvermeylen.com/auto-model" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Stop Asking Which Model to Use — Let Your Config Decide" />
+  <meta property="og:description" content="Claude vs OpenAI for coding agents — the honest breakdown — plus a pattern for baking model choice into your skills so you never have to think about it per-session again." />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Stop Asking Which Model to Use — Let Your Config Decide",
+    "datePublished": "2026-07-23",
+    "author": { "@type": "Person", "name": "Nick Vermeylen" },
+    "publisher": { "@type": "Organization", "name": "Insights" }
+  }
+  </script>
+
+  <style>
+    :root {
+      --paper:      #F8F6F1;
+      --ink:        #1C1612;
+      --ink-soft:   #3D3028;
+      --mid:        #7A6E65;
+      --rule:       #E2DDD6;
+      --hot:        #E85D04;
+      --hot-soft:   #FEF3EC;
+      --saved:      #1A7F5A;
+      --saved-soft: #EAF5F0;
+      --blue:       #3B5FA0;
+      --violet:     #6C47C4;
+      --code-bg:    #1F1B16;
+      --code-fg:    #E8D5BA;
+      --code-comm:  #6E5E48;
+      --w-prose:    680px;
+      --w-wide:     900px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Lora', Georgia, serif;
+      font-size: 18px;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Masthead ─────────────────────────────────── */
+    .masthead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 48px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .masthead-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+    }
+    .masthead-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--mid);
+    }
+
+    /* ── Hero ─────────────────────────────────────── */
+    .hero {
+      max-width: var(--w-wide);
+      margin: 0 auto;
+      padding: 72px 48px 0;
+    }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--violet);
+      margin-bottom: 20px;
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 6.5vw, 72px);
+      font-weight: 700;
+      line-height: 1.07;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 24px;
+      max-width: 760px;
+    }
+    .hero-deck {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 19px;
+      line-height: 1.6;
+      color: var(--mid);
+      max-width: 540px;
+      margin-bottom: 64px;
+    }
+
+    /* ── Decision matrix (signature element) ─────── */
+    .matrix-wrap {
+      max-width: var(--w-wide);
+      margin: 0 auto;
+      padding: 0 48px 80px;
+    }
+    .matrix-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 16px;
+    }
+    .matrix-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      color: var(--mid);
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+    .matrix {
+      display: grid;
+      grid-template-columns: 200px repeat(5, 1fr);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      overflow: hidden;
+      background: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    /* Header row */
+    .mx-head {
+      padding: 10px 12px;
+      background: #F4F2EE;
+      border-bottom: 1px solid var(--rule);
+      border-right: 1px solid var(--rule);
+      color: var(--mid);
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+    }
+    .mx-head:last-child { border-right: none; }
+    .mx-head.model-head {
+      justify-content: center;
+      flex-direction: column;
+      gap: 3px;
+      text-align: center;
+    }
+    .mx-head.model-head .model-name {
+      font-size: 11px;
+      color: var(--ink);
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    .mx-head.model-head .model-price {
+      font-size: 9px;
+      color: var(--mid);
+    }
+
+    /* Task rows */
+    .mx-task {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--rule);
+      border-right: 1px solid var(--rule);
+      color: var(--ink-soft);
+      line-height: 1.4;
+      cursor: default;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+    }
+    .mx-row:last-child .mx-task,
+    .mx-row:last-child .mx-cell { border-bottom: none; }
+    .mx-task:hover { background: #FAF8F5; }
+
+    .mx-cell {
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--rule);
+      border-right: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .mx-cell:last-child { border-right: none; }
+
+    /* Ratings */
+    .r-win  { font-size: 15px; }
+    .r-good { font-size: 13px; opacity: 0.7; }
+    .r-weak { font-size: 11px; opacity: 0.35; }
+    .r-no   { color: var(--rule); font-size: 11px; }
+
+    /* Row hover highlight */
+    .mx-row { display: contents; }
+    .mx-row:hover .mx-task { background: #F5F2EC; }
+    .mx-row:hover .mx-cell { background: #F5F2EC; }
+
+    /* Column highlights triggered by JS */
+    .mx-cell.col-lit   { background: var(--saved-soft) !important; }
+    .mx-task.col-lit   { background: var(--saved-soft) !important; }
+    .mx-head.col-lit   { background: #D4EDE3 !important; }
+
+    /* ── Article ──────────────────────────────────── */
+    .article {
+      max-width: var(--w-prose);
+      margin: 0 auto;
+      padding: 0 48px 72px;
+    }
+    .article p { color: var(--ink-soft); margin-bottom: 24px; }
+    .article a {
+      color: var(--blue);
+      text-decoration: underline;
+      text-decoration-color: rgba(59,95,160,0.3);
+      text-underline-offset: 3px;
+      transition: text-decoration-color 0.15s;
+    }
+    .article a:hover { text-decoration-color: var(--blue); }
+    .article strong { color: var(--ink); font-weight: 600; }
+    .article em { color: inherit; }
+    .article ul, .article ol { color: var(--ink-soft); margin: 8px 0 24px 24px; }
+    .article li { margin-bottom: 8px; line-height: 1.7; }
+    .article code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      background: #ECEAE5;
+      color: var(--ink);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* ── Section break ────────────────────────────── */
+    .section-break {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 72px auto 40px;
+      max-width: var(--w-prose);
+      padding: 0 48px;
+    }
+    .section-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--mid);
+      white-space: nowrap;
+    }
+    .section-rule { height: 1px; background: var(--rule); flex: 1; }
+
+    .article h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(24px, 3.5vw, 34px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+    .article h3 {
+      font-family: 'Lora', serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 44px 0 12px;
+    }
+
+    /* ── Data table ───────────────────────────────── */
+    .table-outer {
+      max-width: var(--w-wide);
+      margin: 20px auto 8px;
+      padding: 0 48px;
+      overflow-x: auto;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      background: white;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .data-table th {
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--mid);
+      font-weight: 400;
+      text-align: left;
+      padding: 9px 14px;
+      background: #F4F2EE;
+      border-bottom: 1px solid var(--rule);
+    }
+    .data-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--rule);
+      color: var(--ink);
+      vertical-align: middle;
+      line-height: 1.45;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table .hl-green td { background: var(--saved-soft); }
+    .data-table .hl-warm td  { background: var(--hot-soft); }
+    .good { color: var(--saved); }
+    .bad  { color: #C1121F; }
+    .win  { color: var(--saved); font-weight: 500; }
+    .dim  { color: var(--mid); }
+    .tbl-caption {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid);
+      padding: 0 48px;
+      max-width: var(--w-wide);
+      margin: 8px auto 36px;
+    }
+
+    /* ── Callout ──────────────────────────────────── */
+    .callout {
+      background: var(--hot-soft);
+      border-left: 3px solid var(--hot);
+      padding: 16px 20px;
+      margin: 24px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 16px;
+      line-height: 1.65;
+      color: #7A2D00;
+      font-family: 'Lora', serif;
+    }
+    .callout.blue {
+      background: #EEF2FA;
+      border-color: var(--blue);
+      color: #1E3A6E;
+    }
+    .callout.violet {
+      background: #F3F0FB;
+      border-color: var(--violet);
+      color: #3A2270;
+    }
+    .callout strong { font-weight: 600; }
+
+    /* ── Code block ───────────────────────────────── */
+    pre.code-block {
+      background: var(--code-bg);
+      border-radius: 6px;
+      padding: 22px 26px;
+      margin: 16px 0 28px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.75;
+      color: var(--code-fg);
+      overflow-x: auto;
+    }
+    pre.code-block .comment { color: var(--code-comm); }
+    pre.code-block .key   { color: #C8A96E; }
+    pre.code-block .val   { color: #A8C4A2; }
+    pre.code-block .str   { color: #C4A882; }
+    pre.code-block .head  { color: #9BAFD4; }
+
+    /* ── Config cards grid ────────────────────────── */
+    .config-grid {
+      max-width: var(--w-wide);
+      margin: 28px auto 8px;
+      padding: 0 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .config-card {
+      background: var(--code-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .config-card-head {
+      background: #2A241C;
+      padding: 9px 16px;
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6E5E48;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .config-card-head .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block;
+    }
+    .config-card-head .dot.r { background: #FF5F56; }
+    .config-card-head .dot.y { background: #FFBD2E; }
+    .config-card-head .dot.g { background: #27C93F; }
+    .config-card-body {
+      padding: 18px 20px;
+      font-size: 12px;
+      line-height: 1.75;
+      color: var(--code-fg);
+    }
+    .config-card-body .comment { color: var(--code-comm); }
+    .config-card-body .key   { color: #C8A96E; }
+    .config-card-body .val   { color: #A8C4A2; }
+    .config-card-body .head  { color: #9BAFD4; }
+    .config-caption {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid);
+      padding: 0 48px;
+      max-width: var(--w-wide);
+      margin: 10px auto 36px;
+    }
+
+    /* ── Flow diagram ─────────────────────────────── */
+    .flow-wrap {
+      max-width: var(--w-wide);
+      margin: 28px auto 36px;
+      padding: 0 48px;
+    }
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .flow-node {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+    .flow-left {
+      width: 180px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 14px;
+      color: var(--mid);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: right;
+      line-height: 1.35;
+      min-height: 52px;
+    }
+    .flow-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 28px;
+      flex-shrink: 0;
+    }
+    .flow-center .node-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--violet);
+      flex-shrink: 0;
+      margin: 20px 0 0;
+    }
+    .flow-center .node-line {
+      width: 2px;
+      background: var(--rule);
+      flex: 1;
+    }
+    .flow-center .node-line.first { margin-top: 0; }
+    .flow-right {
+      flex: 1;
+      padding: 14px 0 14px 14px;
+    }
+    .flow-right .node-title {
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+    .flow-right .node-model {
+      font-size: 10px;
+      color: var(--violet);
+      margin-bottom: 2px;
+    }
+    .flow-right .node-why {
+      font-size: 10px;
+      color: var(--mid);
+      line-height: 1.5;
+    }
+    .flow-node:last-child .flow-center .node-line { display: none; }
+
+    /* ── Closing ──────────────────────────────────── */
+    .closing {
+      background: var(--ink);
+      padding: 64px 48px;
+      margin-top: 72px;
+    }
+    .closing-inner {
+      max-width: var(--w-prose);
+      margin: 0 auto;
+    }
+    .closing h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 700;
+      color: white;
+      margin-bottom: 20px;
+    }
+    .closing p {
+      font-family: 'Lora', serif;
+      font-size: 17px;
+      line-height: 1.75;
+      color: #9A8E84;
+      margin-bottom: 18px;
+    }
+    .closing p:last-child { margin-bottom: 0; }
+    .closing strong { color: #E8D5BA; }
+    .closing code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: rgba(255,255,255,0.08);
+      color: #C8A96E;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* ── Sources ──────────────────────────────────── */
+    .sources {
+      max-width: var(--w-prose);
+      margin: 0 auto;
+      padding: 40px 48px 80px;
+      border-top: 1px solid var(--rule);
+    }
+    .sources-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 16px;
+    }
+    .sources ul { list-style: none; padding: 0; margin: 0; }
+    .sources li { margin-bottom: 8px; }
+    .sources a {
+      font-family: 'Lora', serif;
+      font-size: 14px;
+      color: var(--mid);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .sources a:hover { color: var(--ink); border-color: var(--ink-soft); }
+
+    /* ── Responsive ───────────────────────────────── */
+    @media (max-width: 700px) {
+      .masthead    { padding: 14px 20px; }
+      .hero        { padding: 48px 20px 0; }
+      .article     { padding: 0 20px 60px; }
+      .matrix-wrap { padding: 0 20px 60px; }
+      .matrix      { grid-template-columns: 140px repeat(5, 1fr); font-size: 10px; }
+      .section-break { padding: 0 20px; }
+      .table-outer { padding: 0 20px; }
+      .tbl-caption { padding: 0 20px; }
+      .config-grid { grid-template-columns: 1fr; padding: 0 20px; }
+      .config-caption { padding: 0 20px; }
+      .flow-wrap   { padding: 0 20px; }
+      .closing     { padding: 48px 20px; }
+      .sources     { padding: 32px 20px 60px; }
+      .flow-left   { width: 120px; font-size: 9px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="masthead">
+    <a href="index.html" class="masthead-brand">Insights</a>
+    <span class="masthead-meta">July 2026 &middot; 9 min read</span>
+  </header>
+
+  <section class="hero">
+    <div class="hero-eyebrow">AI Models &middot; Claude vs OpenAI &middot; Agent Config</div>
+    <h1 class="hero-title">Stop asking which model to use</h1>
+    <p class="hero-deck">The Anthropic vs OpenAI breakdown for coding agents — and a simple pattern for delegating that decision to your config, permanently.</p>
+  </section>
+
+  <!-- Signature element: the decision matrix -->
+  <div class="matrix-wrap">
+    <div class="matrix-label">Model decision matrix</div>
+    <div class="matrix-hint">hover a task row to see which models fit — hover a model column to filter by that model</div>
+    <div class="matrix" id="matrix" role="table" aria-label="Model selection matrix by task type">
+
+      <!-- Header -->
+      <div class="mx-head" role="columnheader">Task</div>
+      <div class="mx-head model-head" role="columnheader" data-col="0">
+        <span class="model-name">Haiku 4.5</span>
+        <span class="model-price">$0.80 / $4</span>
+      </div>
+      <div class="mx-head model-head" role="columnheader" data-col="1">
+        <span class="model-name">Sonnet 5</span>
+        <span class="model-price">$2 / $10</span>
+      </div>
+      <div class="mx-head model-head" role="columnheader" data-col="2">
+        <span class="model-name">Opus 4.8</span>
+        <span class="model-price">$15 / $75</span>
+      </div>
+      <div class="mx-head model-head" role="columnheader" data-col="3">
+        <span class="model-name">o4-mini</span>
+        <span class="model-price">$1.10 / $4.40</span>
+      </div>
+      <div class="mx-head model-head" role="columnheader" data-col="4">
+        <span class="model-name">o3</span>
+        <span class="model-price">$2 / $8</span>
+      </div>
+
+      <!-- Rows -->
+      <div class="mx-row">
+        <div class="mx-task" role="cell">File search &amp; navigation</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-win" title="Best choice">✦</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-good" title="Good">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-weak" title="Overkill">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-good" title="Good">✦</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-weak" title="Overkill">✦</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Small code edits &amp; fixes</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-weak">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-weak">✦</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Implementing features (large codebase)</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-weak">✦</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-no">—</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-no">—</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Long autonomous sessions (4 h+)</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-no">—</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-no">—</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-no">—</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Hard math &amp; algorithms</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-no">—</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-win">✦</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Planning &amp; architecture decisions</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-no">—</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-good">✦</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Summarising &amp; documentation</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-weak">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-no">—</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Test generation &amp; code review</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-no">—</span></div>
+      </div>
+
+      <div class="mx-row">
+        <div class="mx-task" role="cell">Multi-step reasoning (bugs, root cause)</div>
+        <div class="mx-cell" data-col="0" role="cell"><span class="r-no">—</span></div>
+        <div class="mx-cell" data-col="1" role="cell"><span class="r-good">✦</span></div>
+        <div class="mx-cell" data-col="2" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="3" role="cell"><span class="r-win">✦</span></div>
+        <div class="mx-cell" data-col="4" role="cell"><span class="r-win">✦</span></div>
+      </div>
+
+    </div>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--mid);margin-top:10px;">
+      ✦ = best &nbsp;·&nbsp; ✦ = good &nbsp;·&nbsp; ✦ = works &nbsp;·&nbsp; — = skip it. prices: input / output per 1M tokens, July 2026.
+    </p>
+  </div>
+
+  <article class="article">
+    <p>Every team I've worked with has had the same conversation at some point: "<em>Should we be using Claude or GPT for this?</em>" Someone has a strong opinion. Someone else has different strong opinion. Nothing gets decided. Everyone keeps using whatever they were already using.</p>
+    <p>It's the wrong conversation. The real question isn't Claude vs OpenAI — it's <strong>which model for which task</strong>, and that answer changes across a single workflow. The good news is you only have to figure it out once. After that, you put it in config and forget about it.</p>
+    <p>Here's what the models actually do well, where they fall short, and the specific pattern I use to make model selection automatic.</p>
+  </article>
+
+  <!-- ── Section 1 ───────────────────────────────── -->
+  <div class="section-break">
+    <span class="section-tag">The honest breakdown</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <article class="article">
+    <h2>What each family is actually good at</h2>
+
+    <p>The marketing from both companies is useless for this decision. Benchmarks help, but only if you understand what they're measuring. Let me give you the practical version.</p>
+
+    <h3>Claude — the long-context, instruction-following specialist</h3>
+
+    <p>Claude's 200K context window isn't a marketing number. It changes what's possible. An entire large codebase — multiple service files, tests, configs, documentation — can fit in a single Claude context. You get coherent, whole-codebase reasoning without chunking, retrieval, or losing the thread.</p>
+
+    <p>In benchmark testing, Claude Sonnet 5 scored 82.1% on SWE-bench Verified — the first model to break the 80% barrier on real-world software engineering tasks. On SWE-bench Pro (harder, less gameable), it scores 63.2%, beating GPT-5.5 by 4.6 points. On long autonomous agent runs — seven hours, multi-file edits, sustained task continuity — Claude Opus demonstrates measurably better self-consistency and significantly fewer hallucinations than comparable OpenAI models.</p>
+
+    <p>The honest weaknesses: Claude is slower than GPT-4o on short-context tasks where latency matters. And for deeply mathematical reasoning problems — the kind of olympiad-level proofs where you want extended chain-of-thought — o3 is still ahead.</p>
+
+    <h3>OpenAI — faster at short tasks, unmatched for hard math</h3>
+
+    <p>GPT-4o is the fastest serious model available. For short, latency-sensitive tasks — quick completions, interactive suggestions, rapid iteration — it's noticeably snappier. If your workflow involves a human waiting for model responses in a tight loop, that matters.</p>
+
+    <p>The o-series (o3, o4-mini) is where OpenAI genuinely pulls ahead: hard reasoning problems. Algorithmic puzzles, mathematical proofs, optimization problems, complex constraint satisfaction — these are o3's home territory. The trade-off is speed and cost: o3 can take 30–60 seconds for a response, and that latency is structural, not a bug.</p>
+
+    <p>The context window is a real limitation — 128K tokens vs Claude's 200K. For small-to-medium codebases it doesn't matter. For large monorepos or wide architectural analysis, you start hitting it.</p>
+  </article>
+
+  <!-- Pricing table -->
+  <div class="table-outer">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Input / 1M</th>
+          <th>Output / 1M</th>
+          <th>Context</th>
+          <th>Best at</th>
+          <th>Skip when</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="hl-green">
+          <td><strong>Claude Haiku 4.5</strong></td>
+          <td class="win">$0.80</td>
+          <td class="win">$4</td>
+          <td>200K</td>
+          <td>Navigation, search, summarisation</td>
+          <td>Complex reasoning needed</td>
+        </tr>
+        <tr class="hl-green">
+          <td><strong>Claude Sonnet 5</strong></td>
+          <td class="good">$2</td>
+          <td class="good">$10</td>
+          <td>200K</td>
+          <td>Coding, large codebases, most tasks</td>
+          <td>Hard math; trivial navigation</td>
+        </tr>
+        <tr>
+          <td><strong>Claude Opus 4.8</strong></td>
+          <td class="bad">$15</td>
+          <td class="bad">$75</td>
+          <td>200K</td>
+          <td>Long autonomous runs, architecture</td>
+          <td>Anything a Sonnet handles fine</td>
+        </tr>
+        <tr>
+          <td><strong>GPT-4o</strong></td>
+          <td class="good">$2.50</td>
+          <td class="good">$10</td>
+          <td>128K</td>
+          <td>Fast short-context tasks, broad integrations</td>
+          <td>Long sessions, large repos</td>
+        </tr>
+        <tr>
+          <td><strong>o4-mini</strong></td>
+          <td class="win">$1.10</td>
+          <td class="win">$4.40</td>
+          <td>128K</td>
+          <td>Budget reasoning, planning, algorithm design</td>
+          <td>Long-context code tasks</td>
+        </tr>
+        <tr>
+          <td><strong>o3</strong></td>
+          <td class="good">$2</td>
+          <td class="good">$8</td>
+          <td>128K</td>
+          <td>Hard math, proofs, deep multi-step logic</td>
+          <td>Anything time-sensitive; large codebases</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-caption">Prices: input / output per 1M tokens, July 2026. Claude Sonnet 5 introductory pricing through August 2026.</p>
+
+  <article class="article">
+    <div class="callout blue">
+      <strong>The Claude Sonnet 5 pricing window:</strong> Through August 31 2026, Sonnet 5 is at introductory pricing of $2/$10 — 40% cheaper input and 33% cheaper output than Sonnet 4.6. If you're still on 4.6 by default, you're paying more for a slower model.
+    </div>
+  </article>
+
+  <!-- ── Section 2 ───────────────────────────────── -->
+  <div class="section-break">
+    <span class="section-tag">The mix that works</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <article class="article">
+    <h2>Stop picking one. Run both.</h2>
+
+    <p>The developers I see spending the most are trying to find the single best model and use it for everything. The ones with the leanest bills use different models for different steps in the same workflow — deliberately, based on what each step actually requires.</p>
+
+    <p>Here's the workflow pattern that covers most coding agent scenarios:</p>
+  </article>
+
+  <!-- Flow diagram -->
+  <div class="flow-wrap">
+    <div class="flow">
+      <div class="flow-node">
+        <div class="flow-left">orchestration &amp; planning</div>
+        <div class="flow-center">
+          <div class="node-dot"></div>
+          <div class="node-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="node-title">Task understanding &amp; plan</div>
+          <div class="node-model">Claude Sonnet 5 or o4-mini</div>
+          <div class="node-why">Decompose the task, identify unknowns, plan subtasks. Sonnet if it's a code problem; o4-mini if it requires algorithmic reasoning before any code is touched.</div>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-left">retrieval</div>
+        <div class="flow-center">
+          <div class="node-dot"></div>
+          <div class="node-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="node-title">Explore codebase, find relevant files</div>
+          <div class="node-model">Claude Haiku 4.5</div>
+          <div class="node-why">Read-only navigation. 200K context handles even large repos. 15× cheaper than Opus for identical file-search results. Zero tool-calling failures in benchmark testing.</div>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-left">implementation</div>
+        <div class="flow-center">
+          <div class="node-dot"></div>
+          <div class="node-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="node-title">Write &amp; edit code</div>
+          <div class="node-model">Claude Sonnet 5</div>
+          <div class="node-why">Best SWE-bench score available. Instruction-following on large codebases is the defining strength. For pure math / algorithm design embedded in code: hand off to o4-mini for that subtask.</div>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-left">verification</div>
+        <div class="flow-center">
+          <div class="node-dot"></div>
+          <div class="node-line"></div>
+        </div>
+        <div class="flow-right">
+          <div class="node-title">Review, test generation, sanity check</div>
+          <div class="node-model">Claude Haiku 4.5 or Sonnet 5</div>
+          <div class="node-why">Haiku for mechanical checks (does this compile, are these tests structurally correct). Sonnet for semantic review (does this actually do the right thing).</div>
+        </div>
+      </div>
+
+      <div class="flow-node">
+        <div class="flow-left">hard reasoning (if needed)</div>
+        <div class="flow-center">
+          <div class="node-dot"></div>
+        </div>
+        <div class="flow-right">
+          <div class="node-title">Algorithm design, proof, optimisation</div>
+          <div class="node-model">o3 or o4-mini</div>
+          <div class="node-why">Reach for o3 only when the problem is genuinely hard reasoning — NP-hard scheduling, mathematical proofs, complex constraint satisfaction. For everything else in this slot, o4-mini costs 45% less and is nearly as capable.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <article class="article">
+    <p>This isn't theoretical. In a workflow with 20 subagent calls, routing the 12 navigation/search calls to Haiku and the 3 hard-reasoning calls to o4-mini can cut total subagent costs by 70–80% compared to running everything on Sonnet or Opus. The implementation calls stay on Sonnet, where they belong.</p>
+  </article>
+
+  <!-- ── Section 3 ───────────────────────────────── -->
+  <div class="section-break">
+    <span class="section-tag">The config pattern</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <article class="article">
+    <h2>Bake the decision into your config. Stop making it per-session.</h2>
+
+    <p>Here's the thing about model selection that nobody talks about: <strong>it's a decision that should be made once, not on every task</strong>. The model that's right for file navigation is always the model that's right for file navigation. It doesn't change session to session. So why are you choosing it manually each time?</p>
+
+    <p>Both Claude Code skills and agent config files accept a <code>model</code> field. Set it once. Every invocation of that skill or agent uses the right model automatically, with no thought required from you or the person running the session.</p>
+
+    <h3>In Claude Code skill files</h3>
+
+    <p>Any skill in <code>.claude/skills/</code> or <code>~/.claude/skills/</code> can declare its model in frontmatter. The skill loads with that model pinned — the session model doesn't matter:</p>
+  </article>
+
+  <div class="config-grid">
+    <div class="config-card">
+      <div class="config-card-head">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        .claude/skills/explore/SKILL.md
+      </div>
+      <div class="config-card-body">
+<span class="comment"># Read-only codebase navigation</span>
+<span class="comment"># Always runs on Haiku — never inherits session model</span>
+<br>
+<span class="head">---</span>
+<span class="key">model</span>: <span class="val">claude-haiku-4-5</span>
+<span class="key">effort</span>: <span class="val">low</span>
+<span class="key">description</span>: <span class="val">Search the codebase, read files,
+  find symbols and definitions.
+  Read-only — never modify anything.</span>
+<span class="head">---</span>
+<br>
+You are a read-only research agent.
+Use grep, file reads, and symbol search.
+Return findings as structured lists.
+      </div>
+    </div>
+    <div class="config-card">
+      <div class="config-card-head">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        .claude/skills/reason/SKILL.md
+      </div>
+      <div class="config-card-body">
+<span class="comment"># Hard reasoning — algorithm design, proofs</span>
+<span class="comment"># Routes to o4-mini via OpenAI-compatible endpoint</span>
+<br>
+<span class="head">---</span>
+<span class="key">model</span>: <span class="val">o4-mini</span>
+<span class="key">effort</span>: <span class="val">high</span>
+<span class="key">description</span>: <span class="val">Deep reasoning for algorithm design,
+  complexity analysis, and hard
+  optimisation problems.</span>
+<span class="head">---</span>
+<br>
+Work through this step by step.
+Show your reasoning before the answer.
+Return: approach, complexity, code sketch.
+      </div>
+    </div>
+  </div>
+  <p class="config-caption">Two skills — two models — zero per-session decisions</p>
+
+  <article class="article">
+    <h3>In agent definition files</h3>
+
+    <p>Subagents defined in <code>.claude/agents/</code> work the same way. The <code>model</code> field pins the model for every invocation of that agent, regardless of what the parent session is running on:</p>
+  </article>
+
+  <div class="config-grid">
+    <div class="config-card">
+      <div class="config-card-head">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        .claude/agents/implement.md
+      </div>
+      <div class="config-card-body">
+<span class="head">---</span>
+<span class="key">name</span>: <span class="val">implement</span>
+<span class="key">model</span>: <span class="val">claude-sonnet-5</span>
+<span class="key">description</span>: <span class="val">Writes and edits code. Handles
+  large codebases. Do not use for
+  pure math or file search.</span>
+<span class="key">tools</span>:
+  - <span class="val">Read</span>
+  - <span class="val">Edit</span>
+  - <span class="val">Write</span>
+  - <span class="val">Bash</span>
+<span class="head">---</span>
+<br>
+Implement the requested change.
+Follow existing patterns in the codebase.
+Do not refactor beyond the task scope.
+      </div>
+    </div>
+    <div class="config-card">
+      <div class="config-card-head">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        .claude/agents/plan.md
+      </div>
+      <div class="config-card-body">
+<span class="head">---</span>
+<span class="key">name</span>: <span class="val">plan</span>
+<span class="key">model</span>: <span class="val">o4-mini</span>
+<span class="key">description</span>: <span class="val">Task planning and decomposition.
+  Breaks complex problems into
+  concrete subtasks with clear scope.</span>
+<span class="key">tools</span>:
+  - <span class="val">Read</span>
+<span class="head">---</span>
+<br>
+Decompose this task into subtasks.
+Flag any ambiguities before planning.
+Output: numbered list, each with
+acceptance criteria and model hint.
+      </div>
+    </div>
+  </div>
+  <p class="config-caption">Agent files pin the model — subagents never inherit by accident</p>
+
+  <article class="article">
+
+    <p>The "model hint" in the plan agent's output is worth noting — it's a pattern where the planning step explicitly annotates each subtask with the model it should run on. If the plan says "Task 3: implement binary search tree — Sonnet" and "Task 4: prove worst-case complexity — o4-mini", the orchestrator routes accordingly without any human judgment at execution time.</p>
+
+    <div class="callout violet">
+      <strong>The rule I use:</strong> If I'm writing a skill or agent and I can't immediately answer "which model should run this?", that's a sign the skill does too many things. Split it. Each agent should have exactly one kind of work, and that work should have an obvious model fit.
+    </div>
+
+    <h3>What about the session default?</h3>
+
+    <p>On a Claude Code Max subscription, the default session model is Opus. Which means if you've defined zero subagent model overrides, every file read, every grep, every test run is being billed at Opus rates — $15/M input — for work that Haiku handles identically at $0.80/M.</p>
+
+    <p>The fix is three files: an <code>explore</code> agent set to Haiku, an <code>implement</code> agent set to Sonnet 5, and a <code>plan</code> agent set to whatever your planning work warrants. Opus stays in the session default for the conversations where it earns its rate — the complex discussions, the architectural decisions, the cases where you actually want the best model thinking about the problem.</p>
+
+    <p>Running everything on Opus is the AI equivalent of sending every company email via FedEx overnight because sometimes you send contracts. The routing exists for a reason.</p>
+
+  </article>
+
+  <!-- ── Section 4 ───────────────────────────────── -->
+  <div class="section-break">
+    <span class="section-tag">The nuance</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <article class="article">
+    <h2>When the tidy mental model breaks down</h2>
+
+    <p>I want to be honest about where this gets complicated, because the "use Haiku for navigation, Sonnet for coding, o3 for math" framework is a simplification.</p>
+
+    <p><strong>The o-series latency is real.</strong> o3 takes 30–60 seconds to respond. If you've built a workflow where an o3 call is in the critical path — something the user is waiting on — that's a bad experience even if the answer is excellent. Use o4-mini instead for planning steps. Reserve o3 for genuinely hard, fully asynchronous reasoning jobs where the extra depth matters and latency doesn't.</p>
+
+    <p><strong>Haiku's output limit bites on certain tasks.</strong> Haiku 4.5 has an 8,192-token output limit. GPT-4o mini caps at 16,384. If you're generating a large file, a long test suite, or multi-section documentation in a single call, Haiku might truncate. Either use Sonnet for that specific task or break the output into multiple calls.</p>
+
+    <p><strong>OpenAI's ecosystem integrations are broader.</strong> If you're already deep in the OpenAI ecosystem — function calling conventions, fine-tuned models, Azure OpenAI Service, specific third-party tools that only support OpenAI — the switching cost is real. GPT-4o is an excellent model for most tasks, and the Claude-vs-OpenAI decision is much less important than "which model for which task within whatever you're using."</p>
+
+    <p><strong>Benchmark gaming is a real problem.</strong> Both companies have been caught, or credibly accused, of optimising for benchmark scenarios. SWE-bench is more representative than most, but "82.1% on SWE-bench" is not the same as "82.1% of your real tasks done correctly." Test on your actual workload before committing to a model for production use.</p>
+
+    <div class="callout">
+      <strong>The honest default:</strong> If you're building a net-new coding agent workflow today and don't have strong reasons to do otherwise — Claude Sonnet 5 for implementation, Claude Haiku 4.5 for retrieval, o4-mini for hard reasoning steps. Revisit when benchmarks shift, which they will.
+    </div>
+
+  </article>
+
+  <!-- Closing -->
+  <div class="closing">
+    <div class="closing-inner">
+      <h2>The decision that doesn't need to be a decision.</h2>
+      <p>You probably have a preferred model right now. It's probably whatever you were using when you first got serious about AI coding tools. That's fine — defaults exist for a reason. But the gap between "one model for everything" and "right model for each task type, baked into config" is where a meaningful chunk of your AI bill is hiding.</p>
+      <p>The config pattern takes an afternoon. Three agent files, three model declarations, done. After that, every session routes automatically: Haiku navigates, Sonnet builds, the reasoning agent reasons. <strong>You stop spending mental energy on model selection, and you stop accidentally billing Opus rates for grep.</strong></p>
+      <p>The models will keep improving. The pattern stays the same: know what each step of your workflow actually requires, match the model to the requirement, put it in config, and move on to the work that actually matters.</p>
+    </div>
+  </div>
+
+  <div class="sources">
+    <div class="sources-head">Sources &amp; further reading</div>
+    <ul>
+      <li><a href="https://codingfleet.com/blog/claude-sonnet-5-vs-gpt-5-5/">Claude Sonnet 5 vs GPT-5.5 benchmark comparison — CodingFleet</a></li>
+      <li><a href="https://benchlm.ai/anthropic/api-pricing">Claude API Pricing July 2026 — BenchLM</a></li>
+      <li><a href="https://valueaddvc.com/blog/openai-api-pricing-2026-gpt-4o-o3-and-gpt-5-cost-breakdown-for-developers">OpenAI API Pricing 2026 — ValueAdd VC</a></li>
+      <li><a href="https://www.mindstudio.ai/blog/gpt-54-mini-vs-claude-haiku-sub-agent-comparison">GPT-5.4 Mini vs Claude Haiku 4.5 for sub-agents — MindStudio</a></li>
+      <li><a href="https://www.lowcode.agency/blog/claude-vs-openai-o3">Claude vs OpenAI o3: Reasoning Models Compared — LowCode Agency</a></li>
+      <li><a href="https://medium.com/@roanmonteiro/claude-code-subagent-model-routing-stop-paying-for-opus-on-haiku-work-ee76dc32cb88">Claude Code subagent model routing — Medium</a></li>
+      <li><a href="https://code.claude.com/docs/en/sub-agents">Claude Code subagent documentation — Anthropic</a></li>
+      <li><a href="https://artificialanalysis.ai/models/comparisons/claude-sonnet-4-6-vs-o3">Claude Sonnet 4.6 vs o3 — Artificial Analysis</a></li>
+      <li><a href="https://blink.new/blog/gpt-5-vs-claude-sonnet">GPT-5 vs Claude Sonnet 2026 — Blink</a></li>
+    </ul>
+  </div>
+
+  <script>
+    // ── Matrix interaction ──────────────────────────
+    // Hover a row: highlight that row (CSS handles via :hover on mx-row with display:contents workaround)
+    // Hover a column header: highlight that column across all rows
+    const matrix = document.getElementById('matrix');
+    const heads  = matrix.querySelectorAll('.mx-head[data-col]');
+    const cells  = matrix.querySelectorAll('.mx-cell[data-col]');
+
+    heads.forEach(head => {
+      const col = head.getAttribute('data-col');
+
+      head.addEventListener('mouseenter', () => {
+        // Highlight all cells in this column
+        matrix.querySelectorAll(`[data-col="${col}"]`).forEach(el => {
+          el.classList.add('col-lit');
+        });
+        // Also highlight task labels in rows that have a win in this col
+        matrix.querySelectorAll(`.mx-cell[data-col="${col}"] .r-win`).forEach(icon => {
+          icon.closest('.mx-row')?.querySelectorAll('.mx-task').forEach(t => t.classList.add('col-lit'));
+        });
+      });
+
+      head.addEventListener('mouseleave', () => {
+        matrix.querySelectorAll('.col-lit').forEach(el => el.classList.remove('col-lit'));
+      });
+    });
+  </script>
+
+</body>
+</html>

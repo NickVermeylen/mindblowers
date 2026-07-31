@@ -1,0 +1,335 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - link "Insights" [ref=f4e3] [cursor=pointer]:
+      - /url: index.html
+    - generic [ref=f4e4]: July 2026 · 9 min read
+  - generic [ref=f4e5]:
+    - generic [ref=f4e6]: AI Models · Claude vs OpenAI · Agent Config
+    - heading "Stop asking which model to use" [level=1] [ref=f4e7]
+    - paragraph [ref=f4e8]: The Anthropic vs OpenAI breakdown for coding agents — and a simple pattern for delegating that decision to your config, permanently.
+  - generic [ref=f4e9]:
+    - generic [ref=f4e10]: Model decision matrix
+    - generic [ref=f4e11]: hover a task row to see which models fit — hover a model column to filter by that model
+    - table "Model selection matrix by task type" [ref=f4e12]:
+      - columnheader "Task" [ref=f4e13]
+      - columnheader "Haiku 4.5 $0.80 / $4" [ref=f4e14]:
+        - generic [ref=f4e15]: Haiku 4.5
+        - generic [ref=f4e16]: $0.80 / $4
+      - columnheader "Sonnet 5 $2 / $10" [ref=f4e17]:
+        - generic [ref=f4e18]: Sonnet 5
+        - generic [ref=f4e19]: $2 / $10
+      - columnheader "Opus 4.8 $15 / $75" [ref=f4e20]:
+        - generic [ref=f4e21]: Opus 4.8
+        - generic [ref=f4e22]: $15 / $75
+      - columnheader "o4-mini $1.10 / $4.40" [ref=f4e23]:
+        - generic [ref=f4e24]: o4-mini
+        - generic [ref=f4e25]: $1.10 / $4.40
+      - columnheader "o3 $2 / $8" [ref=f4e26]:
+        - generic [ref=f4e27]: o3
+        - generic [ref=f4e28]: $2 / $8
+      - generic [ref=f4e29]:
+        - cell "File search & navigation" [ref=f4e30]
+        - cell "✦" [ref=f4e31]:
+          - generic "Best choice" [ref=f4e32]: ✦
+        - cell "✦" [ref=f4e33]:
+          - generic "Good" [ref=f4e34]: ✦
+        - cell "✦" [ref=f4e35]:
+          - generic "Overkill" [ref=f4e36]: ✦
+        - cell "✦" [ref=f4e37]:
+          - generic "Good" [ref=f4e38]: ✦
+        - cell "✦" [ref=f4e39]:
+          - generic "Overkill" [ref=f4e40]: ✦
+      - generic [ref=f4e41]:
+        - cell "Small code edits & fixes" [ref=f4e42]
+        - cell "✦" [ref=f4e43]
+        - cell "✦" [ref=f4e45]
+        - cell "✦" [ref=f4e47]
+        - cell "✦" [ref=f4e49]
+        - cell "✦" [ref=f4e51]
+      - generic [ref=f4e53]:
+        - cell "Implementing features (large codebase)" [ref=f4e54]
+        - cell "✦" [ref=f4e55]
+        - cell "✦" [ref=f4e57]
+        - cell "✦" [ref=f4e59]
+        - cell "—" [ref=f4e61]
+        - cell "—" [ref=f4e63]
+      - generic [ref=f4e65]:
+        - cell "Long autonomous sessions (4 h+)" [ref=f4e66]
+        - cell "—" [ref=f4e67]
+        - cell "✦" [ref=f4e69]
+        - cell "✦" [ref=f4e71]
+        - cell "—" [ref=f4e73]
+        - cell "—" [ref=f4e75]
+      - generic [ref=f4e77]:
+        - cell "Hard math & algorithms" [ref=f4e78]
+        - cell "—" [ref=f4e79]
+        - cell "✦" [ref=f4e81]
+        - cell "✦" [ref=f4e83]
+        - cell "✦" [ref=f4e85]
+        - cell "✦" [ref=f4e87]
+      - generic [ref=f4e89]:
+        - cell "Planning & architecture decisions" [ref=f4e90]
+        - cell "—" [ref=f4e91]
+        - cell "✦" [ref=f4e93]
+        - cell "✦" [ref=f4e95]
+        - cell "✦" [ref=f4e97]
+        - cell "✦" [ref=f4e99]
+      - generic [ref=f4e101]:
+        - cell "Summarising & documentation" [ref=f4e102]
+        - cell "✦" [ref=f4e103]
+        - cell "✦" [ref=f4e105]
+        - cell "✦" [ref=f4e107]
+        - cell "✦" [ref=f4e109]
+        - cell "—" [ref=f4e111]
+      - generic [ref=f4e113]:
+        - cell "Test generation & code review" [ref=f4e114]
+        - cell "✦" [ref=f4e115]
+        - cell "✦" [ref=f4e117]
+        - cell "✦" [ref=f4e119]
+        - cell "✦" [ref=f4e121]
+        - cell "—" [ref=f4e123]
+      - generic [ref=f4e125]:
+        - cell "Multi-step reasoning (bugs, root cause)" [ref=f4e126]
+        - cell "—" [ref=f4e127]
+        - cell "✦" [ref=f4e129]
+        - cell "✦" [ref=f4e131]
+        - cell "✦" [ref=f4e133]
+        - cell "✦" [ref=f4e135]
+    - paragraph [ref=f4e137]: "✦ = best · ✦ = good · ✦ = works · — = skip it. prices: input / output per 1M tokens, July 2026."
+  - article [ref=f4e138]:
+    - paragraph [ref=f4e139]:
+      - text: "Every team I've worked with has had the same conversation at some point: \""
+      - emphasis [ref=f4e140]: Should we be using Claude or GPT for this?
+      - text: "\" Someone has a strong opinion. Someone else has different strong opinion. Nothing gets decided. Everyone keeps using whatever they were already using."
+    - paragraph [ref=f4e141]:
+      - text: It's the wrong conversation. The real question isn't Claude vs OpenAI — it's
+      - strong [ref=f4e142]: which model for which task
+      - text: ", and that answer changes across a single workflow. The good news is you only have to figure it out once. After that, you put it in config and forget about it."
+    - paragraph [ref=f4e143]: Here's what the models actually do well, where they fall short, and the specific pattern I use to make model selection automatic.
+  - generic [ref=f4e144]: The honest breakdown
+  - article [ref=f4e147]:
+    - heading "What each family is actually good at" [level=2] [ref=f4e148]
+    - paragraph [ref=f4e149]: The marketing from both companies is useless for this decision. Benchmarks help, but only if you understand what they're measuring. Let me give you the practical version.
+    - heading "Claude — the long-context, instruction-following specialist" [level=3] [ref=f4e150]
+    - paragraph [ref=f4e151]: Claude's 200K context window isn't a marketing number. It changes what's possible. An entire large codebase — multiple service files, tests, configs, documentation — can fit in a single Claude context. You get coherent, whole-codebase reasoning without chunking, retrieval, or losing the thread.
+    - paragraph [ref=f4e152]: In benchmark testing, Claude Sonnet 5 scored 82.1% on SWE-bench Verified — the first model to break the 80% barrier on real-world software engineering tasks. On SWE-bench Pro (harder, less gameable), it scores 63.2%, beating GPT-5.5 by 4.6 points. On long autonomous agent runs — seven hours, multi-file edits, sustained task continuity — Claude Opus demonstrates measurably better self-consistency and significantly fewer hallucinations than comparable OpenAI models.
+    - paragraph [ref=f4e153]: "The honest weaknesses: Claude is slower than GPT-4o on short-context tasks where latency matters. And for deeply mathematical reasoning problems — the kind of olympiad-level proofs where you want extended chain-of-thought — o3 is still ahead."
+    - heading "OpenAI — faster at short tasks, unmatched for hard math" [level=3] [ref=f4e154]
+    - paragraph [ref=f4e155]: GPT-4o is the fastest serious model available. For short, latency-sensitive tasks — quick completions, interactive suggestions, rapid iteration — it's noticeably snappier. If your workflow involves a human waiting for model responses in a tight loop, that matters.
+    - paragraph [ref=f4e156]: "The o-series (o3, o4-mini) is where OpenAI genuinely pulls ahead: hard reasoning problems. Algorithmic puzzles, mathematical proofs, optimization problems, complex constraint satisfaction — these are o3's home territory. The trade-off is speed and cost: o3 can take 30–60 seconds for a response, and that latency is structural, not a bug."
+    - paragraph [ref=f4e157]: The context window is a real limitation — 128K tokens vs Claude's 200K. For small-to-medium codebases it doesn't matter. For large monorepos or wide architectural analysis, you start hitting it.
+  - table [ref=f4e159]:
+    - rowgroup [ref=f4e160]:
+      - row [ref=f4e161]:
+        - columnheader "Model" [ref=f4e162]
+        - columnheader "Input / 1M" [ref=f4e163]
+        - columnheader "Output / 1M" [ref=f4e164]
+        - columnheader "Context" [ref=f4e165]
+        - columnheader "Best at" [ref=f4e166]
+        - columnheader "Skip when" [ref=f4e167]
+    - rowgroup [ref=f4e168]:
+      - row [ref=f4e169]:
+        - cell [ref=f4e170]:
+          - strong [ref=f4e171]: Claude Haiku 4.5
+        - cell "$0.80" [ref=f4e172]
+        - cell "$4" [ref=f4e173]
+        - cell "200K" [ref=f4e174]
+        - cell "Navigation, search, summarisation" [ref=f4e175]
+        - cell "Complex reasoning needed" [ref=f4e176]
+      - row [ref=f4e177]:
+        - cell [ref=f4e178]:
+          - strong [ref=f4e179]: Claude Sonnet 5
+        - cell "$2" [ref=f4e180]
+        - cell "$10" [ref=f4e181]
+        - cell "200K" [ref=f4e182]
+        - cell "Coding, large codebases, most tasks" [ref=f4e183]
+        - cell "Hard math; trivial navigation" [ref=f4e184]
+      - row [ref=f4e185]:
+        - cell [ref=f4e186]:
+          - strong [ref=f4e187]: Claude Opus 4.8
+        - cell "$15" [ref=f4e188]
+        - cell "$75" [ref=f4e189]
+        - cell "200K" [ref=f4e190]
+        - cell "Long autonomous runs, architecture" [ref=f4e191]
+        - cell "Anything a Sonnet handles fine" [ref=f4e192]
+      - row [ref=f4e193]:
+        - cell [ref=f4e194]:
+          - strong [ref=f4e195]: GPT-4o
+        - cell "$2.50" [ref=f4e196]
+        - cell "$10" [ref=f4e197]
+        - cell "128K" [ref=f4e198]
+        - cell "Fast short-context tasks, broad integrations" [ref=f4e199]
+        - cell "Long sessions, large repos" [ref=f4e200]
+      - row [ref=f4e201]:
+        - cell [ref=f4e202]:
+          - strong [ref=f4e203]: o4-mini
+        - cell "$1.10" [ref=f4e204]
+        - cell "$4.40" [ref=f4e205]
+        - cell "128K" [ref=f4e206]
+        - cell "Budget reasoning, planning, algorithm design" [ref=f4e207]
+        - cell "Long-context code tasks" [ref=f4e208]
+      - row [ref=f4e209]:
+        - cell [ref=f4e210]:
+          - strong [ref=f4e211]: o3
+        - cell "$2" [ref=f4e212]
+        - cell "$8" [ref=f4e213]
+        - cell "128K" [ref=f4e214]
+        - cell "Hard math, proofs, deep multi-step logic" [ref=f4e215]
+        - cell "Anything time-sensitive; large codebases" [ref=f4e216]
+  - paragraph [ref=f4e217]: "Prices: input / output per 1M tokens, July 2026. Claude Sonnet 5 introductory pricing through August 2026."
+  - article [ref=f4e218]:
+    - generic [ref=f4e219]:
+      - strong [ref=f4e220]: "The Claude Sonnet 5 pricing window:"
+      - text: Through August 31 2026, Sonnet 5 is at introductory pricing of $2/$10 — 40% cheaper input and 33% cheaper output than Sonnet 4.6. If you're still on 4.6 by default, you're paying more for a slower model.
+  - generic [ref=f4e221]: The mix that works
+  - article [ref=f4e224]:
+    - heading "Stop picking one. Run both." [level=2] [ref=f4e225]
+    - paragraph [ref=f4e226]: The developers I see spending the most are trying to find the single best model and use it for everything. The ones with the leanest bills use different models for different steps in the same workflow — deliberately, based on what each step actually requires.
+    - paragraph [ref=f4e227]: "Here's the workflow pattern that covers most coding agent scenarios:"
+  - generic [ref=f4e229]:
+    - generic [ref=f4e230]:
+      - generic [ref=f4e231]: orchestration & planning
+      - generic [ref=f4e235]:
+        - generic [ref=f4e236]: Task understanding & plan
+        - generic [ref=f4e237]: Claude Sonnet 5 or o4-mini
+        - generic [ref=f4e238]: Decompose the task, identify unknowns, plan subtasks. Sonnet if it's a code problem; o4-mini if it requires algorithmic reasoning before any code is touched.
+    - generic [ref=f4e239]:
+      - generic [ref=f4e240]: retrieval
+      - generic [ref=f4e244]:
+        - generic [ref=f4e245]: Explore codebase, find relevant files
+        - generic [ref=f4e246]: Claude Haiku 4.5
+        - generic [ref=f4e247]: Read-only navigation. 200K context handles even large repos. 15× cheaper than Opus for identical file-search results. Zero tool-calling failures in benchmark testing.
+    - generic [ref=f4e248]:
+      - generic [ref=f4e249]: implementation
+      - generic [ref=f4e253]:
+        - generic [ref=f4e254]: Write & edit code
+        - generic [ref=f4e255]: Claude Sonnet 5
+        - generic [ref=f4e256]: "Best SWE-bench score available. Instruction-following on large codebases is the defining strength. For pure math / algorithm design embedded in code: hand off to o4-mini for that subtask."
+    - generic [ref=f4e257]:
+      - generic [ref=f4e258]: verification
+      - generic [ref=f4e262]:
+        - generic [ref=f4e263]: Review, test generation, sanity check
+        - generic [ref=f4e264]: Claude Haiku 4.5 or Sonnet 5
+        - generic [ref=f4e265]: Haiku for mechanical checks (does this compile, are these tests structurally correct). Sonnet for semantic review (does this actually do the right thing).
+    - generic [ref=f4e266]:
+      - generic [ref=f4e267]: hard reasoning (if needed)
+      - generic [ref=f4e270]:
+        - generic [ref=f4e271]: Algorithm design, proof, optimisation
+        - generic [ref=f4e272]: o3 or o4-mini
+        - generic [ref=f4e273]: Reach for o3 only when the problem is genuinely hard reasoning — NP-hard scheduling, mathematical proofs, complex constraint satisfaction. For everything else in this slot, o4-mini costs 45% less and is nearly as capable.
+  - article [ref=f4e274]:
+    - paragraph [ref=f4e275]: This isn't theoretical. In a workflow with 20 subagent calls, routing the 12 navigation/search calls to Haiku and the 3 hard-reasoning calls to o4-mini can cut total subagent costs by 70–80% compared to running everything on Sonnet or Opus. The implementation calls stay on Sonnet, where they belong.
+  - generic [ref=f4e276]: The config pattern
+  - article [ref=f4e279]:
+    - heading "Bake the decision into your config. Stop making it per-session." [level=2] [ref=f4e280]
+    - paragraph [ref=f4e281]:
+      - text: "Here's the thing about model selection that nobody talks about:"
+      - strong [ref=f4e282]: it's a decision that should be made once, not on every task
+      - text: . The model that's right for file navigation is always the model that's right for file navigation. It doesn't change session to session. So why are you choosing it manually each time?
+    - paragraph [ref=f4e283]:
+      - text: Both Claude Code skills and agent config files accept a
+      - code [ref=f4e284]: model
+      - text: field. Set it once. Every invocation of that skill or agent uses the right model automatically, with no thought required from you or the person running the session.
+    - heading "In Claude Code skill files" [level=3] [ref=f4e285]
+    - paragraph [ref=f4e286]:
+      - text: Any skill in
+      - code [ref=f4e287]: .claude/skills/
+      - text: or
+      - code [ref=f4e288]: ~/.claude/skills/
+      - text: "can declare its model in frontmatter. The skill loads with that model pinned — the session model doesn't matter:"
+  - generic [ref=f4e289]:
+    - generic [ref=f4e290]:
+      - generic [ref=f4e291]: .claude/skills/explore/SKILL.md
+      - generic [ref=f4e295]: "# Read-only codebase navigation # Always runs on Haiku — never inherits session model --- model: claude-haiku-4-5 effort: low description: Search the codebase, read files, find symbols and definitions. Read-only — never modify anything. --- You are a read-only research agent. Use grep, file reads, and symbol search. Return findings as structured lists."
+    - generic [ref=f4e296]:
+      - generic [ref=f4e297]: .claude/skills/reason/SKILL.md
+      - generic [ref=f4e301]: "# Hard reasoning — algorithm design, proofs # Routes to o4-mini via OpenAI-compatible endpoint --- model: o4-mini effort: high description: Deep reasoning for algorithm design, complexity analysis, and hard optimisation problems. --- Work through this step by step. Show your reasoning before the answer. Return: approach, complexity, code sketch."
+  - paragraph [ref=f4e302]: Two skills — two models — zero per-session decisions
+  - article [ref=f4e303]:
+    - heading "In agent definition files" [level=3] [ref=f4e304]
+    - paragraph [ref=f4e305]:
+      - text: Subagents defined in
+      - code [ref=f4e306]: .claude/agents/
+      - text: work the same way. The
+      - code [ref=f4e307]: model
+      - text: "field pins the model for every invocation of that agent, regardless of what the parent session is running on:"
+  - generic [ref=f4e308]:
+    - generic [ref=f4e309]:
+      - generic [ref=f4e310]: .claude/agents/implement.md
+      - generic [ref=f4e314]: "--- name: implement model: claude-sonnet-5 description: Writes and edits code. Handles large codebases. Do not use for pure math or file search. tools: - Read - Edit - Write - Bash --- Implement the requested change. Follow existing patterns in the codebase. Do not refactor beyond the task scope."
+    - generic [ref=f4e315]:
+      - generic [ref=f4e316]: .claude/agents/plan.md
+      - generic [ref=f4e320]: "--- name: plan model: o4-mini description: Task planning and decomposition. Breaks complex problems into concrete subtasks with clear scope. tools: - Read --- Decompose this task into subtasks. Flag any ambiguities before planning. Output: numbered list, each with acceptance criteria and model hint."
+  - paragraph [ref=f4e321]: Agent files pin the model — subagents never inherit by accident
+  - article [ref=f4e322]:
+    - paragraph [ref=f4e323]: "The \"model hint\" in the plan agent's output is worth noting — it's a pattern where the planning step explicitly annotates each subtask with the model it should run on. If the plan says \"Task 3: implement binary search tree — Sonnet\" and \"Task 4: prove worst-case complexity — o4-mini\", the orchestrator routes accordingly without any human judgment at execution time."
+    - generic [ref=f4e324]:
+      - strong [ref=f4e325]: "The rule I use:"
+      - text: If I'm writing a skill or agent and I can't immediately answer "which model should run this?", that's a sign the skill does too many things. Split it. Each agent should have exactly one kind of work, and that work should have an obvious model fit.
+    - heading "What about the session default?" [level=3] [ref=f4e326]
+    - paragraph [ref=f4e327]: On a Claude Code Max subscription, the default session model is Opus. Which means if you've defined zero subagent model overrides, every file read, every grep, every test run is being billed at Opus rates — $15/M input — for work that Haiku handles identically at $0.80/M.
+    - paragraph [ref=f4e328]:
+      - text: "The fix is three files: an"
+      - code [ref=f4e329]: explore
+      - text: agent set to Haiku, an
+      - code [ref=f4e330]: implement
+      - text: agent set to Sonnet 5, and a
+      - code [ref=f4e331]: plan
+      - text: agent set to whatever your planning work warrants. Opus stays in the session default for the conversations where it earns its rate — the complex discussions, the architectural decisions, the cases where you actually want the best model thinking about the problem.
+    - paragraph [ref=f4e332]: Running everything on Opus is the AI equivalent of sending every company email via FedEx overnight because sometimes you send contracts. The routing exists for a reason.
+  - generic [ref=f4e333]: The nuance
+  - article [ref=f4e336]:
+    - heading "When the tidy mental model breaks down" [level=2] [ref=f4e337]
+    - paragraph [ref=f4e338]: I want to be honest about where this gets complicated, because the "use Haiku for navigation, Sonnet for coding, o3 for math" framework is a simplification.
+    - paragraph [ref=f4e339]:
+      - strong [ref=f4e340]: The o-series latency is real.
+      - text: o3 takes 30–60 seconds to respond. If you've built a workflow where an o3 call is in the critical path — something the user is waiting on — that's a bad experience even if the answer is excellent. Use o4-mini instead for planning steps. Reserve o3 for genuinely hard, fully asynchronous reasoning jobs where the extra depth matters and latency doesn't.
+    - paragraph [ref=f4e341]:
+      - strong [ref=f4e342]: Haiku's output limit bites on certain tasks.
+      - text: Haiku 4.5 has an 8,192-token output limit. GPT-4o mini caps at 16,384. If you're generating a large file, a long test suite, or multi-section documentation in a single call, Haiku might truncate. Either use Sonnet for that specific task or break the output into multiple calls.
+    - paragraph [ref=f4e343]:
+      - strong [ref=f4e344]: OpenAI's ecosystem integrations are broader.
+      - text: If you're already deep in the OpenAI ecosystem — function calling conventions, fine-tuned models, Azure OpenAI Service, specific third-party tools that only support OpenAI — the switching cost is real. GPT-4o is an excellent model for most tasks, and the Claude-vs-OpenAI decision is much less important than "which model for which task within whatever you're using."
+    - paragraph [ref=f4e345]:
+      - strong [ref=f4e346]: Benchmark gaming is a real problem.
+      - text: Both companies have been caught, or credibly accused, of optimising for benchmark scenarios. SWE-bench is more representative than most, but "82.1% on SWE-bench" is not the same as "82.1% of your real tasks done correctly." Test on your actual workload before committing to a model for production use.
+    - generic [ref=f4e347]:
+      - strong [ref=f4e348]: "The honest default:"
+      - text: If you're building a net-new coding agent workflow today and don't have strong reasons to do otherwise — Claude Sonnet 5 for implementation, Claude Haiku 4.5 for retrieval, o4-mini for hard reasoning steps. Revisit when benchmarks shift, which they will.
+  - generic [ref=f4e350]:
+    - heading "The decision that doesn't need to be a decision." [level=2] [ref=f4e351]
+    - paragraph [ref=f4e352]: You probably have a preferred model right now. It's probably whatever you were using when you first got serious about AI coding tools. That's fine — defaults exist for a reason. But the gap between "one model for everything" and "right model for each task type, baked into config" is where a meaningful chunk of your AI bill is hiding.
+    - paragraph [ref=f4e353]:
+      - text: "The config pattern takes an afternoon. Three agent files, three model declarations, done. After that, every session routes automatically: Haiku navigates, Sonnet builds, the reasoning agent reasons."
+      - strong [ref=f4e354]: You stop spending mental energy on model selection, and you stop accidentally billing Opus rates for grep.
+    - paragraph [ref=f4e355]: "The models will keep improving. The pattern stays the same: know what each step of your workflow actually requires, match the model to the requirement, put it in config, and move on to the work that actually matters."
+  - generic [ref=f4e356]:
+    - generic [ref=f4e357]: Sources & further reading
+    - list [ref=f4e358]:
+      - listitem [ref=f4e359]:
+        - link "Claude Sonnet 5 vs GPT-5.5 benchmark comparison — CodingFleet" [ref=f4e360] [cursor=pointer]:
+          - /url: https://codingfleet.com/blog/claude-sonnet-5-vs-gpt-5-5/
+      - listitem [ref=f4e361]:
+        - link "Claude API Pricing July 2026 — BenchLM" [ref=f4e362] [cursor=pointer]:
+          - /url: https://benchlm.ai/anthropic/api-pricing
+      - listitem [ref=f4e363]:
+        - link "OpenAI API Pricing 2026 — ValueAdd VC" [ref=f4e364] [cursor=pointer]:
+          - /url: https://valueaddvc.com/blog/openai-api-pricing-2026-gpt-4o-o3-and-gpt-5-cost-breakdown-for-developers
+      - listitem [ref=f4e365]:
+        - link "GPT-5.4 Mini vs Claude Haiku 4.5 for sub-agents — MindStudio" [ref=f4e366] [cursor=pointer]:
+          - /url: https://www.mindstudio.ai/blog/gpt-54-mini-vs-claude-haiku-sub-agent-comparison
+      - listitem [ref=f4e367]:
+        - 'link "Claude vs OpenAI o3: Reasoning Models Compared — LowCode Agency" [ref=f4e368] [cursor=pointer]':
+          - /url: https://www.lowcode.agency/blog/claude-vs-openai-o3
+      - listitem [ref=f4e369]:
+        - link "Claude Code subagent model routing — Medium" [ref=f4e370] [cursor=pointer]:
+          - /url: https://medium.com/@roanmonteiro/claude-code-subagent-model-routing-stop-paying-for-opus-on-haiku-work-ee76dc32cb88
+      - listitem [ref=f4e371]:
+        - link "Claude Code subagent documentation — Anthropic" [ref=f4e372] [cursor=pointer]:
+          - /url: https://code.claude.com/docs/en/sub-agents
+      - listitem [ref=f4e373]:
+        - link "Claude Sonnet 4.6 vs o3 — Artificial Analysis" [ref=f4e374] [cursor=pointer]:
+          - /url: https://artificialanalysis.ai/models/comparisons/claude-sonnet-4-6-vs-o3
+      - listitem [ref=f4e375]:
+        - link "GPT-5 vs Claude Sonnet 2026 — Blink" [ref=f4e376] [cursor=pointer]:
+          - /url: https://blink.new/blog/gpt-5-vs-claude-sonnet
