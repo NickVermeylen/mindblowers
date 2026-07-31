@@ -1,7 +1,7 @@
 - generic [active] [ref=f4e1]:
   - banner [ref=f4e2]:
     - link "Insights" [ref=f4e3] [cursor=pointer]:
-      - /url: index.html
+      - /url: quick-wins-to-stretch.html
     - generic [ref=f4e4]: July 2026 · 9 min read
   - generic [ref=f4e5]:
     - generic [ref=f4e6]: AI Models · Claude vs OpenAI · Agent Config

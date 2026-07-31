@@ -1,225 +1,175 @@
-# Quick wins to stretch your AI budget
+# Five things that actually cut my AI token bill
 
-**AI Coding Agents · Cost & Efficiency** · July 2025 · 8 min read
+**AI Coding Agents · Cost & Efficiency** · July 2026 · 10 min read
 
-Token-saving practices for AI coding agents — from configuration basics to tools with actual benchmark data behind them.
-
----
-
-Let me set the scene: you're anxiously watching the progress bar on your monthly AI budget as your coding agent retries the same command-line action for the fifth time. "This time it'll work," you tell yourself.
-
-A little while later, you're scratching your head as the agent you tasked with adding a simple new endpoint has produced a two-page design document detailing 15 steps. You let out a sigh and start coding it yourself.
-
-If you've been using AI coding agents or assistants in the past six months, any of this should sound familiar. You've either made peace with it or — like me — been treating token spend as a solvable problem. Here's what actually moves the needle, with benchmark data where I have it.
+Notes from a few months of trying to reduce token spend on a real Java Spring Boot project — what helped, what didn't, and how the tools compared to the numbers on their marketing pages.
 
 ---
 
-## Most waste is a configuration problem.
+I've been running AI coding agents against the same Java Spring Boot codebase for a few months, mostly trying to figure out where the money was going. The usual suspects came up: pick a cheaper model, install a compression plugin, swap the code-search tool. Some of that worked. Some of it didn't. And a couple of the biggest savings came from things I hadn't been looking for.
 
-### Fix your configuration first
+What follows is a summary of what I tried, roughly ordered by how much it saved in practice. Two of the fixes are free. The other three cost something — either time to set up, or a tradeoff in output quality — and they're worth understanding before you install them.
 
-I've been using my `CLAUDE.md` (or `AGENT.md`) configuration files mostly to enforce best-practices and to pass project specific context, but I was missing some pretty important rules. Let's run through some of them.
+---
 
-**Iteration caps.** The single highest-impact change was a hard limit on retry loops. An agent that has failed twice on the same approach is unlikely to succeed on the seventh attempt with the same strategy. Explicit rules prevent the compounding:
+## Loop caps in the config file
+
+Loop caps turned out to matter more than I expected. When an agent gets stuck on a broken assumption, the failed attempts don't just cost you the failed calls — each one lands in the context window, and the next attempt tends to reason a little worse because of it. Over the course of a debugging session that isn't caught, this can compound into surprisingly large invoices.
+
+The fix is a short instruction in `CLAUDE.md` (or `AGENT.md`, depending on your harness):
 
 ```
-# In your AGENT.md / CLAUDE.md
 - Cap each debug loop at 2–3 attempts, then stop and report the blocker.
-- Do NOT retry the same approach more than once.
-  If something fails, form a new hypothesis first.
+- Do NOT retry the same approach more than once. If something fails,
+  form a new hypothesis before trying again.
 - If an assumption cannot be verified with available tools, STOP and ask.
 ```
 
-**Budget guardrails.** Adding spending limits to your specific agents could also avoid some unwanted surprises. I suggest limiting turns and cycles, but using hard caps on token usage could also work.
+There's nothing sophisticated about it, but on the sessions where I would previously have lost a few dollars to a runaway loop, this consistently caught it before it got started. It's also worth noting that no compression tool can undo a loop after the fact — Caveman doesn't refund the tokens spent on twelve failed `npm run build`s — so this is one of the few interventions that has to happen before the spend, not after.
 
-```
-# In your AGENT.md / CLAUDE.md
-Max Turns: 10
-When reaching 10k output tokens, pause and escalate to the user.
-Context should not exceed 150k tokens, else escalate to the user and ask.
-```
+I ended up using two attempts as the cap for shell commands and three for anything involving reasoning about a new file. Beyond that, the agent tends to keep committing more confidently to the wrong direction rather than reconsidering.
 
-**Error log preprocessing.** A 4,000-line stack trace passed verbatim into context is mostly noise. Stripping it down before it reaches the agent — error type, failing command, last relevant stack frame — reduces token spend per call and tends to improve reasoning quality.
+---
 
-- Error type only — not every repeated exception
+## Preprocessing tool output before it hits the context window
+
+A closely related pattern is being deliberate about what tools return to the agent. A four-thousand-line stack trace pasted verbatim into context is mostly noise, and the agent pays for the noise both on input and on the more confused output that tends to follow.
+
+The version I've settled on is to strip logs down to three things before they reach the model:
+
+- The error type
 - The failing command
-- The last relevant stack frame
+- The last relevant stack frame (usually the first frame from your own code)
 
-### Spawning six agents for a grep task? Use Haiku.
+This can be done in a bash wrapper, a pre-commit hook, or an MCP tool — the mechanism matters less than the principle. On a `mvn test` failure, this is often the difference between a 30k-token exchange and a 3k one, and I've found the agent's reasoning tends to be *better* on the shorter version, because it's not wading through Spring's reflection stack to locate the AssertionError.
 
-When using multiple agents, agents inherit the model of the parent or orchestrator — at least when using Claude Code. Having specific model selection criteria, either in `CLAUDE.md` or in your specific `Agent.md` files, is important.
+The same idea applies to other tool calls that routinely produce large outputs. `git diff` is worth scoping by file. `ls` on large trees is worth capping. Web-scraped HTML is usually worth extracting to markdown first. In general, if a tool call regularly returns more than a screen of text, it's worth wrapping.
 
-Spawning 6 agents to read some code in batch should easily be done with the cheapest models.
+Neither of these two changes involves installing anything, and together they accounted for a larger share of my savings than any of the plugins below.
+
+---
+
+## Cheap models for the grunt work
+
+The next thing worth checking is how your subagents are being sized. In Claude Code and most other harnesses, subagents inherit the parent's model by default. If you're on Opus and you fan out six agents to grep for callers of a function, all six of them are running on Opus rates for what is essentially a mechanical search task.
+
+I added explicit model-selection rules in `CLAUDE.md` to handle this:
 
 ```
 # Model selection
-- File reading / code exploration subagents: use claude-haiku-4-5 or newer (Haiku). Fast and cheap for navigation tasks.
-- Implementation / reasoning subagents: inherit session model (Sonnet or above).
-- When in doubt, ask user!
+- File reading / code exploration subagents: use Haiku (claude-haiku-4-5)
+- Implementation / reasoning subagents: inherit session model
+- When in doubt, ask.
 ```
 
+Claude Code's Explore agent is a good illustration of the pattern already built in — it's the read-only search agent, and it defaults to a faster, cheaper tier. The rule I've been applying is roughly: any subagent whose job is "go find X and tell me where it is" doesn't need to run on the largest model available.
+
+The savings from this scale with how often you fan out. On research-heavy sessions where I was running lots of parallel searches, this cut around a fifth of my spend. On sessions that were mostly one agent writing code, it made no difference at all. It's a cheap change that pays where it applies.
+
 ---
 
-## Tools that actually help.
+## Snippet-level retrieval instead of whole-file reads
 
-Most tools in this space promise savings without showing the work. These three have actual benchmark data behind them — which also means the data shows where they fail. I'll illustrate with A/B test results on a Java Spring Boot project.
+The most consistent source of avoidable spend in my logs was file reads. When the agent doesn't know which part of a 400-line file it needs, the natural default is to read the whole thing. Multiply that by twenty tool calls in a research task and it's straightforward to spend a couple hundred thousand input tokens on a question that has a five-line answer.
 
-### Code search: Graphify and Semble
+Two tools worth knowing about here are Graphify and Semble. They solve the same underlying problem — "return only the relevant slice" — in different ways. Graphify builds a semantic graph of the codebase, so you can query cross-file structure without having to read files. Semble does snippet-level retrieval: given a repository and a natural-language question, it returns the specific lines that answer it.
 
-Code searches are an inevitable part of most coding tasks. Loading entire files to answer questions about one function is one of the most common sources of avoidable token spend. Smarter retrieval fixes this without requiring any changes to the model or the agent framework.
+I ran the same three research questions on the Spring Boot codebase three ways: traditional grep-and-read, Graphify, and Semble.
 
-Two rounds of testing compared Graphify and Semble against traditional grep+read across speed, token consumption, cost, and accuracy.
+| Method | Duration | Tool calls | Input tokens (est.) | Est. cost |
+|---|---|---|---|---|
+| Traditional grep + read | 163s | 25 | ~225k | ~$0.75 |
+| Graphify | 81s | 11 | ~66k | ~$0.27 |
+| Semble | 70s | 19 | ~76k | ~$0.33 |
 
-**Round 1: Graphify vs. traditional search**
+Each of them had a distinct profile. Semble was the only one that answered every behavioral question fully correctly, because the snippet it returns tends to include enough of the method body for the agent to reason about what the code actually does. Graphify was the cheapest of the three and was noticeably stronger on questions about cross-file structure — which classes implement an interface, which handlers a message routes through. Traditional read still came out ahead when I already knew which file I was looking at; nothing beats knowing the path.
 
-| Method | Duration | Tool calls | Input tokens (est.) | Output tokens (est.) | Est. cost |
-|--------|----------|------------|---------------------|----------------------|-----------|
-| **Graphify** | 80.9s | 11 | ~66k | ~4,775 | ~$0.27 |
-| Traditional | 163.4s | 25 | ~225k | ~5,300 | ~$0.75 |
+The workflow I settled on uses all three, roughly in this order:
 
-*Round 1 — Graphify vs. traditional grep+read*
+1. Semble first for behavioral questions ("how does X work?", "where does Y get validated?").
+2. Graphify when I need to map cross-file dependencies or find implementations.
+3. A direct read when I already know the file.
 
-Graphify consumed roughly **3.4× fewer input tokens** and ran at half the wall-clock time. The cost delta was ~$0.27 vs ~$0.75 per research session. The accuracy picture was more nuanced:
+The savings vary a lot by task. A well-scoped question with a known file gets essentially no benefit. A question like "how does the booking flow work?" can save 60–70% of the input tokens. Averaged across a week of real use, my input token usage dropped by roughly a third once I stopped defaulting to `Read`.
 
-| Question | Graphify | Traditional | Winner |
-|----------|----------|-------------|--------|
-| Q1 — UserRejected handler | Missed user.unsubscribe() and exception guard | Found both + ticketOption.remove(user) | Traditional |
-| Q2 — Booking flow | High-level only, missed AggregateHandlers / double-dispatch | Full chain incl. @Order(1)/@Order(2) | Traditional |
-| Q3 — AxxesUserSynchronizer | All 4 strategy implementations, correct | Named 1, inferred rest; correct | Graphify (breadth) |
+---
 
-| Dimension | Winner | Delta |
-|-----------|--------|-------|
-| Speed | Graphify | 2× faster |
-| Input tokens | Graphify | ~3.4× fewer |
-| Cost | Graphify | ~2.8× cheaper |
-| Accuracy (method-level) | Traditional | Consistently deeper |
-| Accuracy (breadth / relationships) | Graphify | Better at enumerating cross-file structure |
+## Output compression: helpful in narrower cases than advertised
 
-*Graphify wins on efficiency; traditional search wins on method-level behavioral detail*
+The last category is output-side tooling, and this is where the gap between what's advertised and what actually shows up in the numbers gets widest. I tried two tools that take quite different approaches.
 
-Graphify's graph captures structural relationships well — "what depends on what", "which classes implement this interface". For questions that require reading what a method body actually does, traditional read still produces more complete answers.
+### Caveman
 
-**Round 2: three-way comparison — Traditional, Graphify, Semble**
+[Caveman](https://github.com/JuliusBrussee/caveman) forces the model into a compressed output register — the "me code good, you run test" dialect that gives the tool its name. The marketing figure is around 75% savings. The JetBrains team measured it more carefully at [about 8.5% on real agent tasks](https://blog.jetbrains.com/ai/2026/07/speak-to-ai-agents-like-cavemen-tosave-tokens/), often erased by run-to-run variance.
 
-| Method | Duration | Tool calls | Output chars | Input tokens (est.) | Output tokens (est.) | Est. cost |
-|--------|----------|------------|--------------|---------------------|----------------------|-----------|
-| **Traditional** | 58.1s | 11 | 20,500 | ~99k | ~5,125 | ~$0.37 |
-| Graphify | 62.1s | 17 | 16,470 | ~85k | ~4,117 | ~$0.32 |
-| **Semble** | 70.4s | 19 | 28,000 | ~76k | ~7,000 | ~$0.33 |
-
-*Round 2 — Traditional, Graphify, Semble on the same task set*
-
-Semble returns targeted snippets at the exact line rather than whole files, giving the lowest input token footprint while providing enough method-body context for accurate answers. It was the only tool to answer all behavioral questions fully correctly. Graphify was cheapest overall. Traditional search was fastest when the answer was in a known location.
-
-| Dimension | Winner | Notes |
-|-----------|--------|-------|
-| Speed | Traditional | 58s vs 62s vs 70s — close, all fast |
-| Input tokens | Semble | Snippet-level returns avoid large file reads |
-| Cost | Graphify | Lowest combined in+out cost |
-| Accuracy | Semble | Only tool to get Q1 and Q2 fully correct |
-| Breadth (cross-file) | Semble / Graphify | Both surface relationship structure well |
-
-*Overall verdict — each tool has a distinct profile*
-
-> **Recommended workflow:** Semble for targeted behavioral questions → Graphify to map cross-file dependencies → traditional read only when you need the full file body.
-
-### Output compression: Caveman
-
-Caveman is a Claude Code plugin that forces the model into a compressed output mode — stripping responses to the functional minimum. The results are task-dependent, and the data is honest about that.
-
-On a code review task, standard Caveman mode added cost and significantly increased wall time. Caveman Ultra recovered the time advantage but didn't reduce spend:
+My own results were more polarised than JetBrains's, in a way I think is worth explaining:
 
 | Task | Mode | Cost | Wall time |
-|------|------|------|-----------|
+|---|---|---|---|
 | Code review | Regular | $0.43 | 20m 27s |
-| Code review | Caveman | $0.46 ▲ | 41m 46s ▲ |
-| Code review | Caveman Ultra | $0.44 | 3m 18s ↓ |
+| Code review | Caveman | $0.46 | 41m 46s |
+| Code review | Caveman Ultra | $0.44 | 3m 18s |
 | File summary | Regular | $0.26 | 1m 20s |
-| **File summary** | **Caveman Ultra** | **$0.09 ↓ 64%** | **39s** |
+| File summary | Caveman Ultra | $0.09 | 39s |
 
-*Caveman benchmark — task type determines whether compression helps or hurts*
+On code review, Caveman was either roughly neutral or slightly worse, and Ultra mode saved wall time but not money — same token spend, faster clock. On file summarisation, it produced a genuine 64% cost cut. The reason for the split is that summarisation is a task where verbosity itself is the bottleneck; stripping verbosity is exactly what Caveman does. Code review, by contrast, is a task where the model's reasoning is the deliverable, and compressing the reasoning tends to make it worse rather than cheaper.
 
-The pattern: Caveman performs poorly on tasks where the model's reasoning and code output is the value. On summarisation tasks — where verbosity is the problem — Caveman Ultra saves significantly. Savings of up to 75% have been reported in specific setups.
+The heuristic I've been using is that if the model's prose is the deliverable, compression tends to help. If the model's code and reasoning are the deliverable, it tends not to. That means documentation, summarisation, and changelog generation are worth trying it on. Debugging, design, and code review generally aren't.
 
-### Output compression: Ponytail
+### Ponytail
 
-Ponytail constrains the scope of what gets built rather than compressing the output format. The claim is a 54% reduction in generated code without breaking functionality. The tests tell a more specific story.
+[Ponytail](https://medium.com/coding-nexus/ponytail-the-ai-plugin-that-makes-claude-code-write-54-less-code-without-breaking-anything-df29842c8ff6) takes a different bet. Rather than compressing the format of the output, it constrains what the agent decides to build. The claim on the box is a 54% reduction in generated code. JetBrains [measured closer to 15%](https://blog.jetbrains.com/ai/2026/07/ponytail-skill-claude-tested/) — a real and statistically significant reduction, but roughly a third of what's advertised.
 
-On concrete, well-scoped tasks, both modes produced nearly identical results — Ponytail wrote slightly more lines on the small task set, and normal mode was more accurate on method names:
+On small, well-scoped tasks, my own results converged:
 
-| Method | Task 1 lines | Task 2 lines | Task 3 lines | Total lines | New abstractions |
-|--------|--------------|--------------|--------------|-------------|------------------|
-| **Normal** | 8 | 5 | 4 | **17** | 0 |
-| Ponytail | 10 | 4 | 6 | 20 | 0 |
+| Task | Normal mode | Ponytail |
+|---|---|---|
+| Task 1 | 8 lines | 10 lines |
+| Task 2 | 5 lines | 4 lines |
+| Task 3 | 4 lines | 6 lines |
+| **Total** | **17** | **20** |
 
-| Dimension | Winner | Notes |
-|-----------|--------|-------|
-| Line count | Normal | 17 vs 20 |
-| Correctness | Normal | Found the real method name; Ponytail guessed |
-| YAGNI reasoning | Ponytail | Explicitly surfaced what it chose not to do |
-| Abstraction discipline | Tie | Both: 0 new abstractions |
+Both modes were doing similar YAGNI reasoning on each task and landed in roughly the same place — Ponytail actually produced slightly more code overall on this set. The interesting behaviour showed up on a deliberately vague prompt: *"add a reporting system for sync stats."*
 
-*Small, concrete tasks — the methods converge*
-
-Where the difference became dramatic was on a deliberately vague prompt: *"add a reporting system for sync stats."*
-
-| Method | Lines of code | New abstractions | Files created | Files modified |
-|--------|---------------|------------------|---------------|----------------|
-| **Ponytail** | **3** | **0** | **0** | 1 |
+| Method | Lines | New abstractions | New files | Files modified |
+|---|---|---|---|---|
+| Ponytail | 3 | 0 | 0 | 1 |
 | Normal | 163 | 4 | 4 | 8 |
 
-*"Add a reporting system for sync stats" — scope interpretation diverges sharply*
+Normal mode built a `SyncReport` record, a `SyncStatus` enum, a Spring component, and a REST endpoint — a coherent system, invented from a nine-word prompt. Ponytail added three log lines (sync start, employee count, sync complete with duration) and reasoned that per-operation logging already existed, so operators could grep for counts if they needed to.
 
-**Ponytail — 3 lines of code.** Zero new abstractions. Zero new files. Reasoned that per-operation logging already existed in the action classes, so ops can grep for counts. Added three log lines: sync start, employee count, sync complete with duration.
-
-**Normal mode — 163 lines of code.** 4 new types, 4 new files, 1 breaking interface change across all 4 implementors. Built a SyncReport record, SyncStatus enum, SyncReportStore Spring component, and a REST endpoint. A coherent system — interpreting the prompt more ambitiously than it was stated.
-
-"Reporting system" is a scope magnet. Ponytail's value is most visible on tasks where an unconstrained interpretation would pull in types, stores, endpoints, and interface changes. On small, already-scoped tasks, the modes are functionally equivalent — and normal mode tends to find real method names more reliably.
-
-### Head-to-head: Normal vs Ponytail vs Caveman
-
-Run across the same three tasks: Ponytail wrote 11 lines total, Caveman 24, Normal 25. But Caveman cut prose output by 50% while barely touching code volume. Ponytail cut code by more than half while leaving prose roughly intact.
-
-One task makes the distinction concrete: `isUserEnrolledInEducation`. Ponytail and Caveman both reached for `education.getEnrolledUsers().anyMatch(eu -> eu.is(user))` — leveraging the existing API. Normal routed through `bookingRepository.findAll()` and filtered in memory. That's not a style difference; it's a correctness difference.
-
-On a logging task that was already solved, Ponytail produced zero lines. Normal added ten. Caveman recognised the work was done — and still wrote ten lines anyway.
-
-Caveman's value is in the *communication layer* — same code as Normal, but half the prose, useful when output token cost matters across long sessions or high-volume agents. Ponytail's value is in the *decision layer* — it actively questions what to build, resulting in genuinely fewer lines and sharper scope calls. They're complementary: Ponytail + Caveman together would produce the tightest code with the most compressed explanation.
+Which of those is right depends entirely on what the user actually wanted, and that's the point. On ambiguous prompts, Ponytail defaults to the smallest interpretation, and Normal defaults to the most complete one. The savings show up where the prompts leave scope open, which is also why the measured benchmarks come in well below the advertised numbers — most real tasks aren't ambiguous. Ponytail tends to earn its keep when your prompts are vague or your team has a habit of over-building; on a codebase with clear conventions and specific tickets, the delta shrinks.
 
 ---
 
-## Loops are the biggest cost driver.
+## Things I stopped doing
 
-The tools above all have genuine value in the right context. But the largest single lever — by a significant margin — is loop prevention.
+A few things I tried that didn't work out well enough to keep:
 
-A debugging loop that runs fifteen iterations on a broken assumption doesn't only waste 15× the tokens on those calls. It fills the context window with failed attempts, which degrades subsequent reasoning, which produces more iterations. The failure compounds. No compression tool reverses that after the fact.
-
-What actually works, in rough order of impact:
-
-1. **Hard iteration caps** — Two or three failed attempts at the same approach warrant a new hypothesis or a handoff to a human. This is the single largest source of runaway spend.
-
-2. **Structured error preprocessing** — Summarise logs into structured facts before they enter the context window. Error type + immediate context only — the full dump adds noise without adding signal.
-
-3. **Surgical code retrieval** — Semble or Graphify rather than whole-file reads. Retrieve what the task actually requires, not the entire module it lives in.
-
-4. **Output compression on the right tasks** — Caveman Ultra for summarisation-heavy work where verbosity is the bottleneck. Ponytail for open-ended prompts where scope creep is the risk.
-
-The model itself is rarely the bottleneck. Token spend scales with how the agent is orchestrated — how often it retries, how much context it loads, how much it produces per call.
+- **Aggressive per-call token limits.** Capping output at 4k tokens sounded prudent, but in practice it just caused the agent to hit the limit mid-thought and either fail or retry the whole call. The retries usually cost more than the limit saved.
+- **Compression on reasoning tasks.** Caveman on code review was slower without being meaningfully cheaper. The model seems to need prose room to reason well.
+- **Preloading "context" at session start.** Dumping an architecture doc into every session felt thorough, but most sessions didn't need most of the doc. Letting the agent pull what it needs via Semble or Graphify turned out to be leaner.
 
 ---
 
-## The loop cap is the only place to start
+## Overall ranking
 
-The biggest wins don't come from a library install. They come from iteration caps in `AGENT.md`, preprocessed error logs, and retrieval that's scoped to what the task actually needs. None of that is glamorous. It also doesn't show up in demos. It shows up on the invoice.
+If I had to rank the five in rough order of how much they cut my bill, it would look something like this:
 
-**Start with the loop cap. Everything else is secondary.**
+1. **Loop caps in config** — the single most useful change, and free.
+2. **Preprocessing error logs and other large tool outputs** — free, and typically worth 20–40% of input tokens on debug-heavy sessions.
+3. **Cheap models for grunt subagents** — free, worth 20–30% when you fan out, nothing when you don't.
+4. **Snippet-level code search (Semble, Graphify)** — has a real setup cost, saved roughly a third of input tokens averaged across a week.
+5. **Output compression (Caveman, Ponytail)** — task-dependent. Meaningful savings on summarisation and ambiguous prompts, neutral or worse elsewhere.
+
+What's noticeably absent from the top of the list is model choice, harness swap, or the broader plugin ecosystem. Those matter, but in my experience they're small compared to whether the agent is allowed to spin on a broken assumption for fifteen turns. The configuration-level fixes were both the cheapest to apply and the most consistent in what they saved. The plugins are useful at the margins, and worth understanding, but they're the second pass, not the first.
 
 ---
 
 ## Sources & further reading
 
-- [Caveman benchmarks and tutorial](https://www.qwe.edu.pl/tutorial/caveman-claude-reduce-tokens-75-percent/)
-- [Caveman Mode — The New Stack](https://thenewstack.io/caveman-mode-token-savings/)
-- [Ponytail — Coding Nexus](https://medium.com/coding-nexus/ponytail-the-ai-plugin-that-makes-claude-code-write-54-less-code-without-breaking-anything-df29842c8ff6)
-- [Cutting LLM token costs with RTK — CodePointer](https://codepointer.substack.com/p/cutting-llm-token-costs-with-rtk)
-- [Caveman — GitHub](https://github.com/JuliusBrussee/caveman)
+- [JetBrains: Does the Caveman skill really save 65% of tokens?](https://blog.jetbrains.com/ai/2026/07/speak-to-ai-agents-like-cavemen-tosave-tokens/) — the measured number is closer to 8.5%.
+- [JetBrains: The Ponytail skill, tested](https://blog.jetbrains.com/ai/2026/07/ponytail-skill-claude-tested/) — closer to 15% than the advertised 54%.
+- [Caveman on GitHub](https://github.com/JuliusBrussee/caveman)
+- [Ponytail write-up (Coding Nexus)](https://medium.com/coding-nexus/ponytail-the-ai-plugin-that-makes-claude-code-write-54-less-code-without-breaking-anything-df29842c8ff6)
+- [Caveman tutorial and benchmarks](https://www.qwe.edu.pl/tutorial/caveman-claude-reduce-tokens-75-percent/)
