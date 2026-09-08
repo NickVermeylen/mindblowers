@@ -421,7 +421,7 @@
 
     <p>The most consistent source of avoidable spend in my logs was file reads. When the agent doesn't know which part of a 400-line file it needs, the natural default is to read the whole thing. Multiply that by twenty tool calls in a research task and it's straightforward to spend a couple hundred thousand input tokens on a question that has a five-line answer.</p>
 
-    <p>Two tools worth knowing about here are <strong>Graphify</strong> and <strong>Semble</strong>. Both solve the same underlying problem ("return only the relevant slice") in different ways. Graphify builds a semantic graph of the codebase, so you can query cross-file structure without reading files. Semble does snippet-level retrieval: given a repository and a natural-language question, it returns the specific lines that answer it.</p>
+    <p>Two tools worth knowing about here are <strong><a href="https://github.com/Graphify-Labs/graphify">Graphify</a></strong> and <strong><a href="https://github.com/MinishLab/semble">Semble</a></strong>. Both solve the same underlying problem ("return only the relevant slice") in different ways. Graphify builds a semantic graph of the codebase, so you can query cross-file structure without reading files. Semble does snippet-level retrieval: given a repository and a natural-language question, it returns the specific lines that answer it.</p>
 
     <p>I ran the same three research questions on the Spring Boot codebase three ways: traditional grep-and-read, Graphify, and Semble.</p>
 
@@ -467,8 +467,8 @@
     <p>The workflow I settled on uses all three, roughly in this order:</p>
 
     <ol>
-      <li>Semble first for behavioral questions ("how does X work?", "where does Y get validated?").</li>
-      <li>Graphify when I need to map cross-file dependencies or find implementations.</li>
+      <li><a href="https://github.com/MinishLab/semble">Semble</a> first for behavioral questions ("how does X work?", "where does Y get validated?").</li>
+      <li><a href="https://github.com/Graphify-Labs/graphify">Graphify</a> when I need to map cross-file dependencies or find implementations.</li>
       <li>A direct read when I already know the file.</li>
     </ol>
 
