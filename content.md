@@ -6,9 +6,9 @@ Notes from a few months of trying to reduce token spend on a real Java Spring Bo
 
 ---
 
-I've been running AI coding agents for a few months now, mostly trying to figure out where the money was going. The usual suspects came up: pick a cheaper model, install a compression plugin, swap the code-search tool. Some of that worked. Some of it didn't. And a couple of the biggest savings came from things I hadn't been looking for.
+I've been running AI coding agents against the same Java Spring Boot codebase for a few months, mostly trying to figure out where the money was going. The usual suspects came up: pick a cheaper model, install a compression plugin, swap the code-search tool. Some of that worked. Some of it didn't. And a couple of the biggest savings came from things I hadn't been looking for.
 
-What follows is a summary of what I tried, roughly ordered by how much it saved in practice. Two of the fixes are free. The other three cost something. Either time to set up, or a tradeoff in output quality and they're worth understanding before you install them.
+What follows is a summary of what I tried, roughly ordered by how much it saved in practice. Two of the fixes are free. The other three cost something — either time to set up, or a tradeoff in output quality — and they're worth understanding before you install them.
 
 ---
 
